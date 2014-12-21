@@ -146,6 +146,10 @@ bool CEpollServer::ProcessRecvEnts(epoll_event event)
 			printf("Add connfd error\n");
 			close(connfd);
 		}
+		else
+		{
+			RecvDataProc.AddClient(connfd);
+		}
 	}
 	else if(event.events&EPOLLIN)//to recv data
 	{
@@ -158,6 +162,7 @@ bool CEpollServer::ProcessRecvEnts(epoll_event event)
 	{
 		epoll_ctl(m_iEpollfd, EPOLL_CTL_DEL, event.data.fd, &ev);
 		close(event.data.fd);
+		RecvDataProc.QuitClient(event.data.fd);
 	}
 
     return true;
@@ -165,22 +170,19 @@ bool CEpollServer::ProcessRecvEnts(epoll_event event)
 bool CEpollServer::ProcessRecvData(epoll_event event)
 {
     int nread;
-    char *buff;
+    char buff[MEM_POOL_BLOCK_SIZE *2];
 	while(1)
 	{
-		buff = RecvDataProc.GetBuff();
-		if(NULL == buff)
+	    nread = read(event.data.fd, buff, MEM_POOL_BLOCK_SIZE *2);
+	    if (nread == 0)
 		{
-			printf("get buff error\n");
-			continue;
-		}
-	    nread = read(event.data.fd, buff, MEM_POOL_BLOCK_SIZE);
-	    if (nread == 0){
 	       close(event.data.fd);
+		   RecvDataProc.QuitClient(event.data.fd);
 	       return false;
 	    } 
-	    if (nread < 0){
-		//other proc
+	    if (nread < 0)
+		{
+		  //other proc
 		  return true;
 	    }    
 	    RecvDataProc.AddRecvData(event.data.fd, buff, nread);

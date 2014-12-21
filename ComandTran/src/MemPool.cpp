@@ -176,11 +176,11 @@ bool CMemPool::ExtendPool(int size, int count)
 	MemBlock *block = pcblock->pMemBlockList, *tmp = NULL;
 	while(block != NULL)
 	{
-		LogI("tmp=%d\n",tmp);
+		//LogI("tmp=%d\n",tmp);
 		tmp = block->pNext;
 		FreeList.PushTrail(block);
 		block = tmp;
-		LogI("tmp=%d\n",tmp);
+		//LogI("tmp=%d\n",tmp);
 	}
 	return true;
 }

@@ -8,7 +8,7 @@ int CommandResultPro(char *ret);
 int main()
 {
     char buff[1024];
-	CEpollServer tmp(6005);
+	CEpollServer tmp(6000);
 	tmp.Start();
 	
     while(1)
