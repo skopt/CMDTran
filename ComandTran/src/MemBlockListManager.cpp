@@ -25,7 +25,7 @@ bool CMemBlockListManager::PushHead(MemBlock *pBlock)
 
 	if(pListHead == NULL)//the list is null, let head and trail equal pblock
 	{
-        pListHead = pBlock;
+             pListHead = pBlock;
 		pListTrail = pBlock;
 		pListHead->pNext = NULL;
 	}
@@ -63,7 +63,7 @@ MemBlock *CMemBlockListManager::GetBlockHead()
 	if(NULL == pListHead)
 	{
 		LogE("getBlockHead,Head is null\n");
-        return NULL;
+             return NULL;
 	}
 
 	pRet = pListHead;
@@ -76,18 +76,7 @@ MemBlock *CMemBlockListManager::GetBlockHead()
 
 	return pRet;
 }
-MemBlock* CMemBlockListManager::AddrToBlock(char *addr)
-{
-	MemBlock *tmp = pListHead;
-	while(tmp != NULL)
-	{
-		if(tmp->pBlock != NULL && tmp->pBlock == addr)
-		{
-			return tmp;
-		}
-	}
-	return NULL;
-}
+
 MemBlock* CMemBlockListManager::DeletBlockWithAddr(char *addr)
 {
 	MemBlock *tmp = NULL, *front = NULL;
@@ -106,8 +95,8 @@ MemBlock* CMemBlockListManager::DeletBlockWithAddr(char *addr)
 			break;//tmp is return
 		}
 		//the others
-        front = pListHead;
-	    tmp = front->pNext;
+             front = pListHead;
+	      tmp = front->pNext;
 		while(tmp != NULL)
 		{
 			if(tmp->pBlock != NULL && tmp->pBlock == addr)

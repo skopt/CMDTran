@@ -47,7 +47,7 @@ int Cmdproc::RecvDataProc(char *Command, int len, int Confd)
 
     pclose(fstr);
 
-	send(Confd, "\n\n", strlen("\n\n"), 0);
+    send(Confd, "\n\n", strlen("\n\n"), 0);
 
     return 0;
 }

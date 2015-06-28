@@ -13,8 +13,7 @@ CEpollServer::CEpollServer(int port)
 }
 bool CEpollServer::InitEvn()
 {
-	struct rlimit rt;
-    
+	struct rlimit rt;    
     rt.rlim_max = rt.rlim_cur = EPOLL_EVENT_MAX;
     if (setrlimit(RLIMIT_NOFILE, &rt) == -1) 
     {
@@ -23,7 +22,6 @@ bool CEpollServer::InitEvn()
     }
 	return true;
 }
-
 bool CEpollServer::InitScoket()
 {
 	sockaddr_in v_SerAddr;
@@ -64,6 +62,7 @@ bool CEpollServer::InitScoket()
 	close(m_iListenSock);
 	return false;
 }
+
 bool CEpollServer::AddLisSockEvent()
 {
 	m_iEpollfd = epoll_create(EPOLL_EVENT_MAX);
@@ -77,7 +76,7 @@ bool CEpollServer::AddLisSockEvent()
 }
 
 bool CEpollServer::Start()
-{	
+{
     if(!InitEvn())
     {
 		printf("init env failed\n");
@@ -96,6 +95,7 @@ bool CEpollServer::Start()
 	ThreadManager.InitPool(4);
 	return true;
 }
+
 void* CEpollServer::_EventRecvFun(void *pArgu)
 {
 	CEpollServer *pthis = (CEpollServer *)pArgu;
@@ -110,7 +110,7 @@ void* CEpollServer::_EventRecvFun(void *pArgu)
 	while(true)
 	{
 		v_NumRecvFD = epoll_wait(pthis->m_iEpollfd, pthis->m_Events,EPOLL_EVENT_MAX, -1);
-		printf("v_NumRecvFD=%d\n", v_NumRecvFD);
+		//printf("v_NumRecvFD=%d\n", v_NumRecvFD);
 		//pthis->ProcessRecvEnts(v_NumRecvFD);
 		for(i = 0;i < v_NumRecvFD; i++)
 		{
@@ -120,8 +120,6 @@ void* CEpollServer::_EventRecvFun(void *pArgu)
 			pthis->ThreadManager.AddTask(Task<TaskVal>(tmp,CEpollServer::EventProc));
 		}
 	}
-	
-	
 }
 bool CEpollServer::ProcessRecvEnts(epoll_event event)
 {
@@ -131,16 +129,16 @@ bool CEpollServer::ProcessRecvEnts(epoll_event event)
 	epoll_event ev;
 
 	if(event.data.fd == m_iListenSock) 
-    {
-        connfd = accept(m_iListenSock, (struct sockaddr *)&v_ClntAddr,&addrlen);
-        if (connfd < 0)
-        {
+      {
+             connfd = accept(m_iListenSock, (struct sockaddr *)&v_ClntAddr,&addrlen);
+             if (connfd < 0)
+             {
 			printf("accept error\n");
 		}
 		printf("recv a new client\n");
 		fcntl(connfd, F_SETFL, fcntl(connfd, F_GETFD, 0)|O_NONBLOCK);
-		ev.events = EPOLLIN | EPOLLET;
-        ev.data.fd = connfd;
+		ev.events = EPOLLIN | EPOLLOUT | EPOLLET;
+              ev.data.fd = connfd;
 		if(epoll_ctl(m_iEpollfd, EPOLL_CTL_ADD, connfd, &ev) < 0)
 		{
 			printf("Add connfd error\n");
@@ -157,9 +155,11 @@ bool CEpollServer::ProcessRecvEnts(epoll_event event)
 	}
 	else if(event.events&EPOLLOUT)
 	{
+		printf("-------------------EPOLLOUT-------------\n");
 	}
 	else
 	{
+		printf("socket %d quit1\n", event.data.fd);
 		epoll_ctl(m_iEpollfd, EPOLL_CTL_DEL, event.data.fd, &ev);
 		close(event.data.fd);
 		RecvDataProc.QuitClient(event.data.fd);
@@ -176,7 +176,8 @@ bool CEpollServer::ProcessRecvData(epoll_event event)
 	    nread = read(event.data.fd, buff, MEM_POOL_BLOCK_SIZE *2);
 	    if (nread == 0)
 		{
-	       close(event.data.fd);
+		   printf("socket %d quit2\n", event.data.fd);
+	          close(event.data.fd);
 		   RecvDataProc.QuitClient(event.data.fd);
 	       return false;
 	    } 

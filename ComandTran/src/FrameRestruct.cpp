@@ -15,14 +15,12 @@ CFrameRestruct::~CFrameRestruct()
 {
 }
 
-
 int CFrameRestruct::RestructFrame(int sock, char *pRecvBuffer, int RecvLen)
 {
 	int v_iFrameCount = 0;
 	int v_iCurIndex = 0;
 	int v_iFrameLen = 0;
 	char *pFrame = NULL;
-	LogI("into RestructFrame\n");
 	while(true)
 	{
 		//check head
@@ -76,9 +74,13 @@ char* CFrameRestruct::GetBuffer()
 {
 	if(NULL == pRecvDataProc)
 		return NULL;
-	LogI("into GetBuffer1\n");
+	
 	CRecvDataProc *v_pRecvDataProc = (CRecvDataProc *) pRecvDataProc;
-	LogI("into GetBuffer2\n");
+	if(NULL == v_pRecvDataProc)
+	{
+		LogI("v_pRecvDataProc is null\n");
+		return NULL;
+	}
 	return v_pRecvDataProc->GetBuff();
 }
 void CFrameRestruct::AddToList(int sock, char *pFrame, int len)
@@ -186,6 +188,7 @@ void CFrameRestruct::SaveFrame(int sock, int CurIndex, char *pRecvBuffer, int Fr
 	char *pFrame = GetBuffer();
 	if(NULL == pFrame)
 	{
+		printf("do not get buffer\n");
 		return;
 	}
 	if(CurIndex < m_iExitLen && CurIndex + FrameLen <= m_iExitLen)

@@ -6,6 +6,7 @@ using namespace std;
 #include <stdio.h>
 //---------------define---------------------------
 typedef void (*TaskProcess)(void *pArgu);
+typedef bool (*GetTaskCustomized)(void *pArgu);
 #define LogE printf
 #define LogD printf
 #define LogI printf
@@ -37,13 +38,13 @@ public:
 	~CThreadPool();
 private:
 	pthread_mutex_t TaskListLock;  
-    pthread_cond_t TaskListReady; 
+       pthread_cond_t TaskListReady; 
 	int RuningFlag;
 	list< Task<TaskVal> > TaskList;
 	pthread_t *ThreadCreated;        //all the thread created
-	int mThreadCount;                //thread count
+	int mThreadCount;                    //thread count
 public:
-
+      	GetTaskCustomized  GetTask_Cust;
 private:
 	static void* _ThreadRoutine(void *pArgu);
 public:
@@ -57,6 +58,7 @@ template<typename TaskVal>
 CThreadPool<TaskVal>::CThreadPool()
 {
 	RuningFlag = true;
+	GetTask_Cust = NULL;
 	TaskList.clear();
 }
 
@@ -129,20 +131,35 @@ Task<TaskVal> CThreadPool<TaskVal>::GetTask()
 	pthread_mutex_lock(&TaskListLock);
 	while(TaskList.empty() && RuningFlag)
 	{
-		LogI("Thread %d is waiting\n", pthread_self());
+		//LogI("Thread %d is waiting\n", pthread_self());
 		pthread_cond_wait(&TaskListReady, &TaskListLock);
-		LogI("Thread %d weakup\n", pthread_self());
+		//LogI("Thread %d weakup\n", pthread_self());
 	}
-	LogD("Thread %d to work\n", pthread_self());
+       //LogD("Thread %d to work\n", pthread_self());
 
 	if(!RuningFlag)//exit
 	{
 		pthread_mutex_unlock(&TaskListLock);
 		return ret;
 	}
-
-	ret = TaskList.front();
-	TaskList.pop_front();
+       if(NULL == GetTask_Cust)
+       {
+		ret = TaskList.front();
+		TaskList.pop_front();
+       }
+	else
+	{
+		typename list< Task<TaskVal> >::iterator it;
+		for(it = TaskList.begin(); it != TaskList.end(); it++)
+		{
+			if(GetTask_Cust((void *)(&(*it))))
+			{
+				ret = *it;
+				TaskList.erase(it);
+				break;
+			}
+		}
+	}
 	pthread_mutex_unlock(&TaskListLock);
 	return ret;
 }

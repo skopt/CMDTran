@@ -15,7 +15,6 @@ public:
 	MemBlock* GetBlockHead();
 	bool PushHead(MemBlock *pBlock);
 	bool PushTrail(MemBlock *pBlock);
-	MemBlock* AddrToBlock(char *addr);
 	MemBlock* DeletBlockWithAddr(char *addr);
 	bool IsEmpty();
 private:

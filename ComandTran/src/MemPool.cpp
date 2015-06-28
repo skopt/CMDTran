@@ -7,7 +7,7 @@
 #define LogI printf
 
 CMemPool::CMemPool()
-:m_BlockCount(0),CreatedFlag(false)
+:m_BlockCount(0),CreatedFlag(false),GrowCount(0)
 {
 	ContnBlockList = NULL;
 }
@@ -47,18 +47,23 @@ char* CMemPool::GetBlock()
 		if(!ExtendPool(BlockSize,GrowStep))
 		{
 			LogE("GetBlock: extend poll failed");
-			return false;
+			return NULL;
 		}
 		m_BlockCount += GrowStep;
 		pRet = FreeList.GetBlockHead();
 		if(NULL == pRet)
 		{
 			LogE("Get block: get null even extend the pool");
-			return false;
+			return NULL;
 		}
 	}
 
 	UsedList.PushTrail(pRet);
+	if(NULL == pRet->pBlock)
+	{
+	    LogI("pRet->pBlock is null\n");
+		return NULL;
+	}
 	memset(pRet->pBlock, 0, BlockSize); 
 	return pRet->pBlock;	
 }
@@ -139,7 +144,7 @@ ContnBlockInf* CMemPool::GetContnBlock(int blockSize, int blockCount)
 	MemBlock *tmp = pContnBlock->pMemBlockList;
 	while(tmp != NULL)
 	{
-		LogI("tmp = %d, tmp->pBlock=%d\n", tmp, tmp->pBlock);
+		//LogI("tmp = %d, tmp->pBlock=%d\n", tmp, tmp->pBlock);
 		tmp = tmp->pNext;
 	}
 
@@ -147,6 +152,11 @@ ContnBlockInf* CMemPool::GetContnBlock(int blockSize, int blockCount)
 }
 bool CMemPool::ExtendPool(int size, int count)
 {
+	if(GrowCount++ >= GROW_COUNT_MAX)
+	{
+		LogE("Grow Count max\n");
+		return false;
+	}
 	ContnBlockInf *pcblock = GetContnBlock(size,count);
 	ContnBlockInf *ptmp = NULL;
 	if(NULL == pcblock)
@@ -176,11 +186,9 @@ bool CMemPool::ExtendPool(int size, int count)
 	MemBlock *block = pcblock->pMemBlockList, *tmp = NULL;
 	while(block != NULL)
 	{
-		//LogI("tmp=%d\n",tmp);
 		tmp = block->pNext;
 		FreeList.PushTrail(block);
 		block = tmp;
-		//LogI("tmp=%d\n",tmp);
 	}
 	return true;
 }

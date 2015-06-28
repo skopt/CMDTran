@@ -4,6 +4,7 @@
 #include "DataStructDef.h"
 #include "MemBlockListManager.h"
 /*------------------Define-------------------------*/
+#define GROW_COUNT_MAX 16
 struct ContnBlockInf
 {
 	MemBlock *pMemBlockList;
@@ -25,18 +26,15 @@ private:
 	bool ExtendPool(int size, int count);
 public:
 	int m_BlockCount;//current block size
-
 	
 private:
 	long BlockSize;
 	long BlockCount;
 	int GrowStep;
+	int GrowCount;
 	bool CreatedFlag;
 	ContnBlockInf *ContnBlockList;
 	CMemBlockListManager FreeList;           
 	CMemBlockListManager UsedList;
-
 };
-
-
 #endif
