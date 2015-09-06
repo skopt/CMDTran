@@ -11,6 +11,8 @@
 #define CLIENT_TYPE_PHONE 0
 #define CLIENT_TYPE_PC  1
 
+typedef bool (* SendDataFun) (void * pArgu, int sock, char *buffer, int len);
+
 //client info
 struct ClientInfo
 {
@@ -25,7 +27,7 @@ class CRecvDataProc
 public:
 	CRecvDataProc();
 	~CRecvDataProc();
-	void Init();
+	void Init(void *pArgu, SendDataFun sendfun);
 	char* GetBuff();
 	void AddClient(int sock);
 	void QuitClient(int sock);
@@ -47,5 +49,7 @@ private:
 	pthread_mutex_t RecvFrameMPLock;
 	map<int, ClientInfo> ClientMap;
 	pthread_mutex_t ClientMapLock;
+       void * pEpollServer;
+       SendDataFun SendData;
 };
 #endif

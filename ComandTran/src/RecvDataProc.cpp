@@ -11,8 +11,13 @@ CRecvDataProc::CRecvDataProc()
 CRecvDataProc::~CRecvDataProc()
 {
 }
-void CRecvDataProc::Init()
+void CRecvDataProc::Init(void *pArgu, SendDataFun sendfun)
 {
+       if(NULL != sendfun && NULL != pArgu)
+       {
+         SendData = sendfun;
+         pEpollServer = pArgu;
+       }
 	pthread_mutex_init(&RecvFrameMPLock, NULL);
 	pthread_mutex_init(&ClientMapLock, NULL);
 	RecvFrameProcTM.InitPool(1);
@@ -34,7 +39,7 @@ void CRecvDataProc::FreeBuff(char *pbuff)
 	pthread_mutex_lock(&RecvFrameMPLock);
 	if(!RecvFrameMP.FreeBlock(pbuff))
 	{
-		printf("Free block failed!!!");
+		printf("Free block failed!!!\n");
 	}
 	pthread_mutex_unlock(&RecvFrameMPLock);
 }
@@ -146,6 +151,7 @@ bool CRecvDataProc::GetTaskCustImp(void *pArgu)
 void CRecvDataProc::CommandProc(int sock, char *pFrame, int FrameLen)
 {
 	unsigned char code = (unsigned char)pFrame[3];
+       //printf("receieve a frame code = %d\n", code);
 	switch(code)
 	{
 		case 0x00:
@@ -227,7 +233,7 @@ void CRecvDataProc::PicDataRecv(int sock, char *pFrame, int FrameLen)
 		if(it->first != sock && CLIENT_TYPE_PC == it->second.ClientType
 			&& v_iCameraId == it->second.CameraId)
 		{
-			write(it->first,pFrame,FrameLen);
+			SendData(pEpollServer, it->first,pFrame,FrameLen);
 		}
 	}
 }

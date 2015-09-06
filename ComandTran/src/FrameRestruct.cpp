@@ -204,5 +204,5 @@ void CFrameRestruct::SaveFrame(int sock, int CurIndex, char *pRecvBuffer, int Fr
 	{
 		memcpy(pFrame, &pRecvBuffer[CurIndex - m_iExitLen], FrameLen);
 	}
-    AddToList(sock, pFrame, FrameLen);
+       AddToList(sock, pFrame, FrameLen);
 }

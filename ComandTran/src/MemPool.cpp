@@ -46,14 +46,14 @@ char* CMemPool::GetBlock()
 	{
 		if(!ExtendPool(BlockSize,GrowStep))
 		{
-			LogE("GetBlock: extend poll failed");
+			LogE("GetBlock: extend poll failed\n");
 			return NULL;
 		}
 		m_BlockCount += GrowStep;
 		pRet = FreeList.GetBlockHead();
 		if(NULL == pRet)
 		{
-			LogE("Get block: get null even extend the pool");
+			LogE("Get block: get null even extend the pool\n");
 			return NULL;
 		}
 	}
@@ -73,7 +73,7 @@ bool CMemPool::FreeBlock(char *addr)
 	MemBlock *block = UsedList.DeletBlockWithAddr(addr);
 	if(NULL == block)
 	{
-		LogI("FreeBlock error: get block null");
+		LogI("FreeBlock error: get block null\n");
 		return false;
 	}
 	//init the block
@@ -101,53 +101,54 @@ void CMemPool::FreeMem()
 }
 ContnBlockInf* CMemPool::GetContnBlock(int blockSize, int blockCount)
 {
-	if(blockCount <= 0 || blockSize <= 0)
-	{
-		return NULL;
-	}
-	//get block info struct
-	ContnBlockInf *pContnBlock =new ContnBlockInf();
-	if(NULL == pContnBlock)
-	{
-		return NULL;
-	}	
-	memset(pContnBlock, 0, sizeof(pContnBlock));
-
-	//get mem block
-	pContnBlock->pMemBlock = new char[blockSize * blockCount];
-	if(NULL == pContnBlock->pMemBlock)
-	{
-		delete pContnBlock;
-		return NULL;
-	}
-	memset(pContnBlock->pMemBlock, 0, sizeof(pContnBlock->pMemBlock));
-
-	//get mem list
-	pContnBlock->pMemBlockList = new MemBlock[blockCount];
-	if(NULL == pContnBlock->pMemBlockList)
-	{
-		delete pContnBlock->pMemBlock;
-		delete pContnBlock;
-		return NULL;
-	}
-	memset(pContnBlock->pMemBlockList, 0, sizeof(pContnBlock->pMemBlockList));
-
-    //init
-    for(int i = 0; i < blockCount; i++)
-    {
-		pContnBlock->pMemBlockList[i].pBlock =(char *)(&(pContnBlock->pMemBlock[i*BlockSize]));
-        if(i != blockCount - 1)//it's null when i = blockcount-1 because the init before
+        if(blockCount <= 0 || blockSize <= 0)
         {
-		    pContnBlock->pMemBlockList[i].pNext = &(pContnBlock->pMemBlockList[i+1]);
+        	return NULL;
         }
-    }
-	MemBlock *tmp = pContnBlock->pMemBlockList;
-	while(tmp != NULL)
-	{
-		//LogI("tmp = %d, tmp->pBlock=%d\n", tmp, tmp->pBlock);
-		tmp = tmp->pNext;
-	}
+        //get block info struct
+        ContnBlockInf *pContnBlock =new ContnBlockInf();
+        if(NULL == pContnBlock)
+        {
+        	return NULL;
+        }	
+        memset(pContnBlock, 0, sizeof(pContnBlock));
 
+        //get mem block
+        pContnBlock->pMemBlock = new char[blockSize * blockCount];
+        if(NULL == pContnBlock->pMemBlock)
+        {
+        	delete pContnBlock;
+        	return NULL;
+        }
+        memset(pContnBlock->pMemBlock, 0, sizeof(pContnBlock->pMemBlock));
+
+        //get mem list
+        pContnBlock->pMemBlockList = new MemBlock[blockCount];
+        if(NULL == pContnBlock->pMemBlockList)
+        {
+        	delete pContnBlock->pMemBlock;
+        	delete pContnBlock;
+        	return NULL;
+        }
+        memset(pContnBlock->pMemBlockList, 0, sizeof(pContnBlock->pMemBlockList));
+
+        //init
+        for(int i = 0; i < blockCount; i++)
+        {
+            pContnBlock->pMemBlockList[i].pBlock =(char *)(&(pContnBlock->pMemBlock[i*BlockSize]));
+            if(i != blockCount - 1)//it's null when i = blockcount-1 because the init before
+            {
+        	    pContnBlock->pMemBlockList[i].pNext = &(pContnBlock->pMemBlockList[i+1]);
+            }
+        }
+        /*//for test
+        MemBlock *tmp = pContnBlock->pMemBlockList;
+        while(tmp != NULL)
+        {
+        	//LogI("tmp = %d, tmp->pBlock=%d\n", tmp, tmp->pBlock);
+        	tmp = tmp->pNext;
+        }
+        */
 	return pContnBlock;	
 }
 bool CMemPool::ExtendPool(int size, int count)
@@ -161,7 +162,7 @@ bool CMemPool::ExtendPool(int size, int count)
 	ContnBlockInf *ptmp = NULL;
 	if(NULL == pcblock)
 	{
-		LogE("ExtendPool: the continue block is null");
+		LogE("ExtendPool: the continue block is null\n");
 		return false;
 	}
 	//add to the ContnBlockList	
@@ -192,3 +193,8 @@ bool CMemPool::ExtendPool(int size, int count)
 	}
 	return true;
 }
+long CMemPool::GetBlockSize()
+{
+    return BlockSize;
+}
+
