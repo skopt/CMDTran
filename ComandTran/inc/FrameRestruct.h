@@ -7,7 +7,7 @@
 #define FRAME_LEN_MAX 1024 + 100
 class CFrameRestruct{
 public:
-    CFrameRestruct();
+      CFrameRestruct();
 	~CFrameRestruct();
 	int RestructFrame(int sock, char *pRecvBuffer, int RecvLen);
 private:

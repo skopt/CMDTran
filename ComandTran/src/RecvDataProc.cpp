@@ -5,6 +5,33 @@
 
 #define LogI printf
 
+CFrameProcTask::CFrameProcTask(int sock, char* frame, int len, CRecvDataProc& dataproc)
+:m_Sock(sock),m_pFrame(frame), m_FrameLen(len), m_DataProc(dataproc)
+{
+}
+CFrameProcTask::~CFrameProcTask()
+{
+}
+
+void CFrameProcTask::ProcessTask()
+{
+    	m_DataProc.CommandProc(m_Sock, m_pFrame, m_FrameLen);
+	m_DataProc.FreeBuff(m_pFrame);
+       delete this;
+	/* struct changed, do not need the flag anymore
+       map<int, ClientInfo>::iterator it;
+	pthread_mutex_lock(&m_DataProc.ClientMapLock);
+	it = m_DataProc.ClientMap.find(m_Sock);
+	if(it == m_DataProc.ClientMap.end())
+	{		
+		pthread_mutex_unlock(&m_DataProc.ClientMapLock);
+		return;
+	}
+	it->second.FrameProcessingFlag = false;
+	pthread_mutex_unlock(&pthis->ClientMapLock);      
+	*/
+}
+
 CRecvDataProc::CRecvDataProc()
 {
 }
@@ -20,8 +47,8 @@ void CRecvDataProc::Init(void *pArgu, SendDataFun sendfun)
        }
 	pthread_mutex_init(&RecvFrameMPLock, NULL);
 	pthread_mutex_init(&ClientMapLock, NULL);
-	RecvFrameProcTM.InitPool(1);
-	RecvFrameProcTM.GetTask_Cust = CRecvDataProc::GetTaskCustImp;
+	RecvFrameProcTM.InitPool(4);
+	//RecvFrameProcTM.GetTask_Cust = CRecvDataProc::GetTaskCustImp;
 	RecvFrameMP.CreatPool(MEM_POOL_BLOCK_SIZE, 100, 50);
 }
 char* CRecvDataProc::GetBuff()
@@ -52,7 +79,6 @@ void CRecvDataProc::AddClient(int sock)
 	newClient.socket = sock;
 	newClient.FrameRestruct.pRecvDataProc = (void *) this;
 	newClient.ClientType = -1;
-	newClient.FrameProcessingFlag = false;
 	pthread_mutex_lock(&ClientMapLock);
        ClientMap.insert(pair<int, ClientInfo>(sock, newClient));
 	pthread_mutex_unlock(&ClientMapLock);
@@ -93,36 +119,13 @@ bool CRecvDataProc::AddRecvData(int sock, char *pbuff, int len)
 	return true;
 }
 
-void CRecvDataProc::AddFrameProcTask(RecvFrameProcTV task)
+void CRecvDataProc::AddFrameProcTask(int sock, char* frame, int len)
 {
-	task.pthis = this;
-	RecvFrameProcTM.AddTask(Task<RecvFrameProcTV>(task,
-		RecvDataProcFun));
+	CFrameProcTask* tmp = new CFrameProcTask(sock, frame, len, *this);
+	RecvFrameProcTM.AddTask(sock, tmp);
 }
-void CRecvDataProc::RecvDataProcFun(void *pArgu)
-{
-	RecvFrameProcTV *pRcDataProcTV = (RecvFrameProcTV *)pArgu;
-	CRecvDataProc *pthis = (CRecvDataProc *)pRcDataProcTV->pthis;
-	if(NULL == pRcDataProcTV || NULL == pRcDataProcTV->pFrame || NULL == pthis)
-	{
-		printf("bad param\n");
-		return;
-	}
-	pthis->CommandProc(pRcDataProcTV->RecvSocket, pRcDataProcTV->pFrame, pRcDataProcTV->FameLen);
-       int socket = pRcDataProcTV->RecvSocket;
-	pthis->FreeBuff(pRcDataProcTV->pFrame);
-	//test
-       map<int, ClientInfo>::iterator it;
-	pthread_mutex_lock(&pthis->ClientMapLock);
-	it = pthis->ClientMap.find(socket);
-	if(it == pthis->ClientMap.end())
-	{		
-		pthread_mutex_unlock(&pthis->ClientMapLock);
-		return;
-	}
-	it->second.FrameProcessingFlag = false;
-	pthread_mutex_unlock(&pthis->ClientMapLock);       
-}
+
+/*struct changed , do not need anymore
 bool CRecvDataProc::GetTaskCustImp(void *pArgu)
 {
 	bool ret = false;
@@ -147,7 +150,7 @@ bool CRecvDataProc::GetTaskCustImp(void *pArgu)
 	}
 	pthread_mutex_unlock(&pthis->ClientMapLock);
 	return ret;
-}
+}*/
 void CRecvDataProc::CommandProc(int sock, char *pFrame, int FrameLen)
 {
 	unsigned char code = (unsigned char)pFrame[3];
@@ -234,6 +237,7 @@ void CRecvDataProc::PicDataRecv(int sock, char *pFrame, int FrameLen)
 			&& v_iCameraId == it->second.CameraId)
 		{
 			SendData(pEpollServer, it->first,pFrame,FrameLen);
+			//write(it->first,pFrame,FrameLen);
 		}
 	}
 }

@@ -89,12 +89,7 @@ void CFrameRestruct::AddToList(int sock, char *pFrame, int len)
 		return;
 
 	CRecvDataProc *v_pRecvDataProc = (CRecvDataProc *) pRecvDataProc;
-
-	RecvFrameProcTV NewTask;
-	NewTask.RecvSocket = sock;
-	NewTask.pFrame = pFrame;
-	NewTask.FameLen = len;
-    v_pRecvDataProc->AddFrameProcTask(NewTask);
+       v_pRecvDataProc->AddFrameProcTask(sock, pFrame, len);
 }
 
 int CFrameRestruct::GetHeadIndex(int CurIndex, char *pRecvBuffer, int RecvLen)

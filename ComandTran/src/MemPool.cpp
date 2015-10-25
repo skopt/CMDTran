@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <assert.h>
 
 #define LogE printf
 #define LogI printf
@@ -33,8 +34,9 @@ bool CMemPool::CreatPool(int blockSize, int blockCount, int step)
 		LogE("CreatPool: extend pool failed");
 		return false;
 	}
-
-    m_BlockCount += BlockCount;
+       
+       m_BlockCount += BlockCount;
+       printf("ExtendPool succeed, the count is %d\n", m_BlockCount);
 	CreatedFlag = true;
 	return true;
 }
@@ -48,8 +50,9 @@ char* CMemPool::GetBlock()
 		{
 			LogE("GetBlock: extend poll failed\n");
 			return NULL;
-		}
+		}             
 		m_BlockCount += GrowStep;
+             LogI("Extend Pool succeed, curren block cout is  %d\n", m_BlockCount);
 		pRet = FreeList.GetBlockHead();
 		if(NULL == pRet)
 		{
@@ -62,7 +65,7 @@ char* CMemPool::GetBlock()
 	if(NULL == pRet->pBlock)
 	{
 	    LogI("pRet->pBlock is null\n");
-		return NULL;
+	    return NULL;
 	}
 	memset(pRet->pBlock, 0, BlockSize); 
 	return pRet->pBlock;	
@@ -107,6 +110,7 @@ ContnBlockInf* CMemPool::GetContnBlock(int blockSize, int blockCount)
         }
         //get block info struct
         ContnBlockInf *pContnBlock =new ContnBlockInf();
+        printf("pContnBlock=%x\n", pContnBlock);
         if(NULL == pContnBlock)
         {
         	return NULL;
@@ -130,25 +134,27 @@ ContnBlockInf* CMemPool::GetContnBlock(int blockSize, int blockCount)
         	delete pContnBlock;
         	return NULL;
         }
-        memset(pContnBlock->pMemBlockList, 0, sizeof(pContnBlock->pMemBlockList));
+        memset(pContnBlock->pMemBlockList, 0, sizeof(pContnBlock->pMemBlockList));//sizeof(MemBlock) * blockCount
 
         //init
         for(int i = 0; i < blockCount; i++)
         {
             pContnBlock->pMemBlockList[i].pBlock =(char *)(&(pContnBlock->pMemBlock[i*BlockSize]));
-            if(i != blockCount - 1)//it's null when i = blockcount-1 because the init before
+            if(i < blockCount - 1)//it's null when i = blockcount-1 because the init before
             {
         	    pContnBlock->pMemBlockList[i].pNext = &(pContnBlock->pMemBlockList[i+1]);
             }
         }
-        /*//for test
+        printf("pMemBlockList[blockCount - 1].pNext=%x\n", pContnBlock->pMemBlockList[blockCount - 1].pNext);
+        pContnBlock->pMemBlockList[blockCount - 1].pNext = NULL;
+        //for test
         MemBlock *tmp = pContnBlock->pMemBlockList;
         while(tmp != NULL)
         {
-        	//LogI("tmp = %d, tmp->pBlock=%d\n", tmp, tmp->pBlock);
+        	LogI("tmp = %d, tmp->pBlock=%d\n", tmp, tmp->pBlock);
         	tmp = tmp->pNext;
         }
-        */
+        
 	return pContnBlock;	
 }
 bool CMemPool::ExtendPool(int size, int count)
@@ -178,15 +184,21 @@ bool CMemPool::ExtendPool(int size, int count)
 			if(ptmp->pNext == NULL)
 			{
 				ptmp->pNext = pcblock;
+                           pcblock->pNext = NULL;
 				break;
 			}
 			ptmp = ptmp->pNext;
 		}
 	}
-    //add to the free list
+       //add to the free list
+       printf("pcblock=%x\n", pcblock);
+       printf("pcblock->pMemBlockList=%x\n", pcblock->pMemBlockList);
 	MemBlock *block = pcblock->pMemBlockList, *tmp = NULL;
 	while(block != NULL)
 	{
+             assert(block);
+             printf("the block is %x\n", block);
+             printf(" the next is %x\n", block->pNext);
 		tmp = block->pNext;
 		FreeList.PushTrail(block);
 		block = tmp;

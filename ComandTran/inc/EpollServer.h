@@ -5,7 +5,7 @@
 #include <pthread.h>
 #include <sys/epoll.h>
 #include <map>
-#include "ThreadPool.h"
+#include "MasterWorkPool.h"
 #include "RecvDataProc.h"
 #include "MemChain.h"
 #include "MemPool.h"
@@ -23,27 +23,38 @@ struct SocketInformation{
     int CurrSendState;
 };
 
-struct TaskVal
+class CEpollServer;
+class CSocketRecvTask: public CTask
 {
-	epoll_event event;
-	void *pthis;
+public:
+    CSocketRecvTask(CEpollServer &epoll, epoll_event event);
+    ~CSocketRecvTask();
+    void ProcessTask();
+private:
+    bool ProcessRecvEnts(epoll_event event);
+    bool ProcessRecvData(epoll_event event);
+public:
+
+private:
+    CEpollServer & m_Epoll;
+    epoll_event m_Event;
 };
 
 class CEpollServer
 {
 public:
-	
-
+	int m_iEpollfd;
+       map<int, SocketInformation> m_SocketInfo;
+       pthread_mutex_t m_SocketInfoLock;
+       CRecvDataProc RecvDataProc;
 private:
 	int m_iListenSock;
 	int m_iPort;
-	int m_iEpollfd;
 	epoll_event m_ListenEvent;
 	epoll_event m_Events[EPOLL_EVENT_MAX];
-       map<int, SocketInformation> m_SocketInfo;
-       pthread_mutex_t m_SocketInfoLock;
-	CThreadPool<TaskVal> ThreadManager;
-	CRecvDataProc RecvDataProc;
+       
+	CMasterWorkPool ThreadManager;
+	
        list<int> SendingList;
        pthread_mutex_t m_SendingListLock;
        pthread_cond_t m_SendingListReady;
@@ -56,6 +67,7 @@ private:
 public:
 	CEpollServer(int port);
 	bool Start();
+       int GetListenSocket();
 
 private:
 	bool InitEvn();
@@ -68,7 +80,7 @@ private:
        bool ProcessSendData(epoll_event event);
        bool SendData(int sock, char *buffer, int len);
        static bool SendDataIntf(void *pArgu, int sock, char *buffer, int len);
-	static void EventProc(void *pArgu);
+       friend class CSocketRecvTask;
        
 };
 #endif

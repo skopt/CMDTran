@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <assert.h>
 
 #define LogE printf
 
@@ -53,7 +54,8 @@ bool CMemBlockListManager::PushTrail(MemBlock *pBlock)
 	{
 		pListTrail->pNext = pBlock;
 		pListTrail = pBlock;
-	}	
+	}
+       assert(pListTrail);
 	pListTrail->pNext = NULL;//reinit
 	return true;
 }
