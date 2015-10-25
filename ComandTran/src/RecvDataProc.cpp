@@ -105,8 +105,7 @@ void CRecvDataProc::QuitClient(int sock)
 
 bool CRecvDataProc::AddRecvData(int sock, char *pbuff, int len)
 {
-	map<int, ClientInfo>::iterator it;
-	
+      map<int, ClientInfo>::iterator it;
       pthread_mutex_lock(&ClientMapLock);
 	it = ClientMap.find(sock);
 	if(it == ClientMap.end())
@@ -225,12 +224,13 @@ void CRecvDataProc::PicDataRecv(int sock, char *pFrame, int FrameLen)
 	}
 	int v_iCameraId = v_clientIt->second.CameraId;
 
-	map<int, ClientInfo>::iterator it;
+
 	//test
-	int v_iTotal = ((unsigned char)pFrame[4])*256 + (unsigned char)pFrame[5];
-       int v_iFrameIndex = ((unsigned char)pFrame[6])*256 + (unsigned char)pFrame[7];
+	//int v_iTotal = ((unsigned char)pFrame[4])*256 + (unsigned char)pFrame[5];
+       //int v_iFrameIndex = ((unsigned char)pFrame[6])*256 + (unsigned char)pFrame[7];
 	//printf("*******************************v_iTotal=%d, v_iFrameIndex=%d\n", v_iTotal, v_iFrameIndex);
 	//test
+	map<int, ClientInfo>::iterator it;
 	for(it = ClientMap.begin(); it != ClientMap.end(); it++)
 	{
 		if(it->first != sock && CLIENT_TYPE_PC == it->second.ClientType

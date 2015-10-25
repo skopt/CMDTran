@@ -3,24 +3,14 @@
 #include <string.h>
 #include <pthread.h>
 
-pthread_mutex_t flock;
 int getCurrentTime(char *ptime);
 
-int log_init()
+void  CLog::Init()
 {
-    if(pthread_mutex_init(&flock, NULL) != 0)
-       return 1;
-    else
-        return 0;    
+    pthread_mutex_init(&flock, NULL);   
 }
-int dbg_log(char *info)
-{
-	if(NULL == info)
-		return 0;
-	log_write(info,strlen(info));
-	return 1;
-}
-int log_write(char *info, int len)
+
+int CLog::LogWrite(char *info, int len)
 {
     //init
     char *path="./aa.log";
@@ -39,7 +29,7 @@ int log_write(char *info, int len)
     }
     //write time
     current_time[0] = '[';
-    getCurrentTime(current_time + 1);    
+    GetCurrentTime(current_time + 1);    
     current_time[20] = ']';
     current_time[21] = ' ';
     ret = write(fd, current_time, 22);
@@ -63,7 +53,7 @@ int log_write(char *info, int len)
   ptime format YYYY:MM:DD HH:mm:ss  19character
   0:success -1 error
 */
-int getCurrentTime(char *ptime)
+int CLog::GetCurrentTime(char *ptime)
 {
     time_t now;
     struct tm *time_now;
@@ -76,8 +66,3 @@ int getCurrentTime(char *ptime)
     sprintf(ptime, "%02d-%02d-%02d %02d:%02d:%02d", time_now->tm_year + 1990, time_now->tm_mon,
         time_now->tm_mday, time_now->tm_hour, time_now->tm_min, time_now->tm_sec);
 }
-
-
-
-
-

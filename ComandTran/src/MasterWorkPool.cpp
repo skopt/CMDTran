@@ -43,4 +43,3 @@ bool CMasterWorkPool::ShutDown()
     }
     return ret;
 }
-

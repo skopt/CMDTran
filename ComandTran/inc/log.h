@@ -7,15 +7,19 @@
 /*
 must be called first
 */
-int log_init();
+class CLog
+{
+public:
+    CLog();
+    ~CLog();
+    int LogWrite(char *info, int len); 
+private:
+    void Init();
+    int GetCurrentTime(char *ptime);
+public:
 
-int dbg_log(char *info);
-
-/*
-  return
-  0:success
-  other:error happen
-*/
-int log_write(char *info, int len); 
+private:
+    pthread_mutex_t flock;
+};
 
 #endif

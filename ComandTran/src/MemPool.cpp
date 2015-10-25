@@ -110,7 +110,7 @@ ContnBlockInf* CMemPool::GetContnBlock(int blockSize, int blockCount)
         }
         //get block info struct
         ContnBlockInf *pContnBlock =new ContnBlockInf();
-        printf("pContnBlock=%x\n", pContnBlock);
+        //printf("pContnBlock=%x\n", pContnBlock);
         if(NULL == pContnBlock)
         {
         	return NULL;
@@ -145,15 +145,16 @@ ContnBlockInf* CMemPool::GetContnBlock(int blockSize, int blockCount)
         	    pContnBlock->pMemBlockList[i].pNext = &(pContnBlock->pMemBlockList[i+1]);
             }
         }
-        printf("pMemBlockList[blockCount - 1].pNext=%x\n", pContnBlock->pMemBlockList[blockCount - 1].pNext);
+        //printf("pMemBlockList[blockCount - 1].pNext=%x\n", pContnBlock->pMemBlockList[blockCount - 1].pNext);
         pContnBlock->pMemBlockList[blockCount - 1].pNext = NULL;
         //for test
+        /*
         MemBlock *tmp = pContnBlock->pMemBlockList;
         while(tmp != NULL)
         {
         	LogI("tmp = %d, tmp->pBlock=%d\n", tmp, tmp->pBlock);
         	tmp = tmp->pNext;
-        }
+        }*/
         
 	return pContnBlock;	
 }
@@ -191,14 +192,14 @@ bool CMemPool::ExtendPool(int size, int count)
 		}
 	}
        //add to the free list
-       printf("pcblock=%x\n", pcblock);
-       printf("pcblock->pMemBlockList=%x\n", pcblock->pMemBlockList);
+       //printf("pcblock=%x\n", pcblock);
+       //printf("pcblock->pMemBlockList=%x\n", pcblock->pMemBlockList);
 	MemBlock *block = pcblock->pMemBlockList, *tmp = NULL;
 	while(block != NULL)
 	{
              assert(block);
-             printf("the block is %x\n", block);
-             printf(" the next is %x\n", block->pNext);
+             //printf("the block is %x\n", block);
+             //printf(" the next is %x\n", block->pNext);
 		tmp = block->pNext;
 		FreeList.PushTrail(block);
 		block = tmp;

@@ -66,7 +66,6 @@ private:
 	map<int, ClientInfo> ClientMap;
 	pthread_mutex_t ClientMapLock;
        void * pEpollServer;
-       SendDataFun SendData;
-       
+       SendDataFun SendData;     
 };
 #endif

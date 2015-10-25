@@ -1,11 +1,13 @@
 #ifndef _MEMBLCOKLISTMANAGER_H_
 #define _MEMBLCOKLISTMANAGER_H_
 /*------------------Include-------------------------*/
-#include "DataStructDef.h"
-
 
 /*------------------Define-------------------------*/
-
+struct MemBlock
+{
+	MemBlock *pNext;
+	char *pBlock;
+};
 
 class CMemBlockListManager
 {
@@ -21,12 +23,9 @@ private:
 
 public:
 	int m_BlockCount;//current block size
-	
 private:
 	MemBlock *pListHead;
 	MemBlock *pListTrail;
-
 };
-
 
 #endif

@@ -50,7 +50,6 @@ void* CThreadPool::_ThreadRoutine(void *pArgu)
 			LogE("Process fun is null,continue\n");
 			continue;
 		}
-
 		workTask->ProcessTask();
     }
     pthread_exit (NULL);//for exit complete
@@ -121,6 +120,3 @@ bool CThreadPool::ShutDown()
 	LogI("all the thread exit\n");
 	return true;
 }
-
-
-

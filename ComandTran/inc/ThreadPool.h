@@ -14,8 +14,6 @@ typedef bool (*GetTaskCustomized)(void *pArgu);
 #define LogD printf
 #define LogI printf
 
-
-
 class CThreadPool
 {
 public:

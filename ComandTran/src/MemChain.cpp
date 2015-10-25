@@ -64,7 +64,7 @@ MemNode* CMemChain::GetIndex(int index)
 MemNode* CMemChain::GetHead()
 {
     MemNode *tmp = GetIndex(0);
-    printf("CMemChain: get addr %x\n", tmp->pBuffer);
+    //printf("CMemChain: get addr %x\n", tmp->pBuffer);
     return tmp;
 }
 bool CMemChain::DeleteAt(int index)
