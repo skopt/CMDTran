@@ -208,6 +208,11 @@ bool CRecvDataProc::NewClient(int sock, char *pFrame)
 	printf("new client, type=%d, Camera Id=%d\n", v_iClientType, it->second.CameraId);
 	return true;
 }
+int CRecvDataProc::SendCallBakcFun(char* buff, int len, int code)
+{
+    printf("frame send result %d\n", code);
+    return 0;
+}
 void CRecvDataProc::PicDataRecv(int sock, char *pFrame, int FrameLen)
 {
 	if(NULL == pFrame)
@@ -236,7 +241,7 @@ void CRecvDataProc::PicDataRecv(int sock, char *pFrame, int FrameLen)
 		if(it->first != sock && CLIENT_TYPE_PC == it->second.ClientType
 			&& v_iCameraId == it->second.CameraId)
 		{
-			SendData(pEpollServer, it->first,pFrame,FrameLen);
+			SendData(pEpollServer, it->first,pFrame,FrameLen, CRecvDataProc::SendCallBakcFun);
 			//write(it->first,pFrame,FrameLen);
 		}
 	}

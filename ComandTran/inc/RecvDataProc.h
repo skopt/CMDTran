@@ -5,13 +5,14 @@
 #include <pthread.h>
 #include <map>
 #include "FrameRestruct.h"
+#include "MemChain.h"
 
 //-----------------------define----------------------
 #define MEM_POOL_BLOCK_SIZE 1024 + 128
 #define CLIENT_TYPE_PHONE 0
 #define CLIENT_TYPE_PC  1
 
-typedef bool (* SendDataFun) (void * pArgu, int sock, char *buffer, int len);
+typedef bool (* SendDataFun) (void * pArgu, int sock, char *buffer, int len, SendCallBack backfun);
 
 class CRecvDataProc;
 class CFrameProcTask:public CTask
@@ -57,6 +58,7 @@ private:
 	bool NewClient(int sock, char *pFrame);	
 	void PicDataRecv(int sock, char *pFrame, int FrameLen);
 	void ResetCameraId(int sock, char *pFrame, int FrameLen);
+       static int SendCallBakcFun(char* buff, int len, int code);
 public:
       friend class CFrameProcTask;
 private:	

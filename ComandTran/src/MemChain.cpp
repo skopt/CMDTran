@@ -19,7 +19,7 @@ CMemChain::~CMemChain()
     }
 }
 
-bool CMemChain::Push(char * buffer,int len)
+bool CMemChain::Push(char * buffer,int len, SendCallBack backfun)
 {
     if(NULL == buffer)
         return false;
@@ -28,6 +28,7 @@ bool CMemChain::Push(char * buffer,int len)
     memset(pNew, 0, sizeof(MemNode));
 
     pNew->pBuffer = buffer;
+    pNew->CallBackFun = backfun;
     pNew->len = len;
     pNew->begin = 0;
     

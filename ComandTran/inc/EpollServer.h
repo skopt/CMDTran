@@ -40,6 +40,17 @@ private:
     epoll_event m_Event;
 };
 
+class CSocketSendTask:public CTask
+{
+public:
+    CSocketSendTask(CEpollServer &epoll, int sock);
+    ~CSocketSendTask();
+    void ProcessTask();
+private:
+    CEpollServer &m_Epoll;
+    int m_soket;
+};
+
 class CEpollServer
 {
 public:
@@ -54,8 +65,8 @@ private:
 	epoll_event m_Events[EPOLL_EVENT_MAX];
        
 	CMasterWorkPool ThreadManager;
+       CMasterWorkPool SendThreadManager;
 	
-       list<int> SendingList;
        pthread_mutex_t m_SendingListLock;
        pthread_cond_t m_SendingListReady;
        pthread_t SendProcThread;
@@ -78,9 +89,10 @@ private:
 	bool ProcessRecvEnts(epoll_event event);
 	bool ProcessRecvData(epoll_event event);
        bool ProcessSendData(epoll_event event);
-       bool SendData(int sock, char *buffer, int len);
-       static bool SendDataIntf(void *pArgu, int sock, char *buffer, int len);
+       bool SendData(int sock, char *buffer, int len, SendCallBack backfun);
+       static bool SendDataIntf(void *pArgu, int sock, char *buffer, int len, SendCallBack backfun);
        friend class CSocketRecvTask;
+       friend class CSocketSendTask;
        
 };
 #endif
