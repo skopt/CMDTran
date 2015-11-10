@@ -4,7 +4,7 @@ class CTask
 {
 public:
 	CTask(){}
-        ~CTask(){}
+        virtual ~CTask(){}
 public:
 	virtual void ProcessTask() = 0;
 };

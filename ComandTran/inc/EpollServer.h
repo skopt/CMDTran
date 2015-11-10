@@ -6,7 +6,7 @@
 #include <sys/epoll.h>
 #include <map>
 #include "MasterWorkPool.h"
-#include "RecvDataProc.h"
+#include "RecvDataProcIntf.h"
 #include "MemChain.h"
 #include "MemPool.h"
 
@@ -57,12 +57,13 @@ public:
 	int m_iEpollfd;
        map<int, SocketInformation> m_SocketInfo;
        pthread_mutex_t m_SocketInfoLock;
-       CRecvDataProc RecvDataProc;
 private:
 	int m_iListenSock;
 	int m_iPort;
 	epoll_event m_ListenEvent;
 	epoll_event m_Events[EPOLL_EVENT_MAX];
+
+       CRecvDataProcIntf* RecvDataProc;
        
 	CMasterWorkPool ThreadManager;
        CMasterWorkPool SendThreadManager;
@@ -76,9 +77,10 @@ private:
        
 
 public:
-	CEpollServer(int port);
+	CEpollServer(int port, CRecvDataProcIntf* dataproc);
 	bool Start();
        int GetListenSocket();
+       bool SendData(int sock, char *buffer, int len, SendCallBack backfun);
 
 private:
 	bool InitEvn();
@@ -89,8 +91,6 @@ private:
 	bool ProcessRecvEnts(epoll_event event);
 	bool ProcessRecvData(epoll_event event);
        bool ProcessSendData(epoll_event event);
-       bool SendData(int sock, char *buffer, int len, SendCallBack backfun);
-       static bool SendDataIntf(void *pArgu, int sock, char *buffer, int len, SendCallBack backfun);
        friend class CSocketRecvTask;
        friend class CSocketSendTask;
        

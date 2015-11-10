@@ -34,17 +34,13 @@ void CFrameProcTask::ProcessTask()
 
 CRecvDataProc::CRecvDataProc()
 {
+    Init();
 }
 CRecvDataProc::~CRecvDataProc()
 {
 }
-void CRecvDataProc::Init(void *pArgu, SendDataFun sendfun)
+void CRecvDataProc::Init()
 {
-       if(NULL != sendfun && NULL != pArgu)
-       {
-         SendData = sendfun;
-         pEpollServer = pArgu;
-       }
 	pthread_mutex_init(&RecvFrameMPLock, NULL);
 	pthread_mutex_init(&ClientMapLock, NULL);
 	RecvFrameProcTM.InitPool(4);
@@ -241,8 +237,7 @@ void CRecvDataProc::PicDataRecv(int sock, char *pFrame, int FrameLen)
 		if(it->first != sock && CLIENT_TYPE_PC == it->second.ClientType
 			&& v_iCameraId == it->second.CameraId)
 		{
-			SendData(pEpollServer, it->first,pFrame,FrameLen, CRecvDataProc::SendCallBakcFun);
-			//write(it->first,pFrame,FrameLen);
+			SendData(it->first,pFrame,FrameLen, CRecvDataProc::SendCallBakcFun);
 		}
 	}
 }

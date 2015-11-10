@@ -55,7 +55,7 @@ bool CSocketRecvTask::ProcessRecvEnts(epoll_event event)
                     pthread_mutex_lock(&m_Epoll.m_SocketInfoLock);
                     m_Epoll.m_SocketInfo.insert(pair<int, SocketInformation>(connfd, NewSocket));
                     pthread_mutex_unlock(&m_Epoll.m_SocketInfoLock);
-			m_Epoll.RecvDataProc.AddClient(connfd);
+			m_Epoll.RecvDataProc->AddClient(connfd);
 		}
 	}
 	else if(event.events&EPOLLIN)//to recv data
@@ -89,7 +89,7 @@ bool CSocketRecvTask::ProcessRecvEnts(epoll_event event)
 		printf("socket %d quit1\n", event.data.fd);
 		epoll_ctl(m_Epoll.m_iEpollfd, EPOLL_CTL_DEL, event.data.fd, &ev);
 		close(event.data.fd);
-		m_Epoll.RecvDataProc.QuitClient(event.data.fd);
+		m_Epoll.RecvDataProc->QuitClient(event.data.fd);
 	}
 
     return true;
@@ -105,15 +105,15 @@ bool CSocketRecvTask::ProcessRecvData(epoll_event event)
         {
     	       printf("socket %d quit2\n", event.data.fd);
               close(event.data.fd);
-    	       m_Epoll.RecvDataProc.QuitClient(event.data.fd);
+    	       m_Epoll.RecvDataProc->QuitClient(event.data.fd);
               return false;
         } 
         if (nread < 0)
        {
-    	  //other proc
-    	  return true;
+    	      //other proc
+    	      return true;
         }    
-        m_Epoll.RecvDataProc.AddRecvData(event.data.fd, buff, nread);
+        m_Epoll.RecvDataProc->AddRecvData(event.data.fd, buff, nread);
     }
     return true;
 }
@@ -199,9 +199,11 @@ void CSocketSendTask::ProcessTask()
 
     delete this;
 }
-CEpollServer::CEpollServer(int port)
+CEpollServer::CEpollServer(int port, CRecvDataProcIntf* dataproc)
 {
    m_iPort = port;
+   RecvDataProc = dataproc;
+   RecvDataProc->SetEpoll(this);
    pthread_mutex_init(&m_SocketInfoLock, NULL);
    pthread_mutex_init(&m_SendDataMemLock, NULL);
    pthread_mutex_init(&m_SendingListLock, NULL);
@@ -285,8 +287,6 @@ bool CEpollServer::Start()
 		return false;
 	}
 
-	RecvDataProc.Init((void *) this, CEpollServer::SendDataIntf);
-
 	pthread_t v_ThreadID;	
 	int ret = pthread_create(&v_ThreadID, NULL, _EventRecvFun, (void *)this);
 	if(0 != ret)
@@ -299,18 +299,6 @@ bool CEpollServer::Start()
        SendThreadManager.InitPool(4);//send threads
        
 	return true;
-}
-bool CEpollServer::SendDataIntf(void * pArgu,int sock,char * buffer,int len, SendCallBack backfun)
-{
-    if(NULL == pArgu)
-        return false;
-
-    CEpollServer *pthis = (CEpollServer *) pArgu;
-    //test
-    //int v_iTotal = ((unsigned char)buffer[4])*256 + (unsigned char)buffer[5];
-    //int v_iFrameIndex = ((unsigned char)buffer[6])*256 + (unsigned char)buffer[7];
-    //printf("*******************************v_iTotal=%d, v_iFrameIndex=%d\n", v_iTotal, v_iFrameIndex);
-    return pthis -> SendData(sock, buffer, len, backfun);
 }
 
 bool CEpollServer::SendData(int sock, char *buffer, int len, SendCallBack backfun)

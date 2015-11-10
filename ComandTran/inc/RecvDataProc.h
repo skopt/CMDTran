@@ -6,6 +6,8 @@
 #include <map>
 #include "FrameRestruct.h"
 #include "MemChain.h"
+#include "RecvDataProcIntf.h"
+
 
 //-----------------------define----------------------
 #define MEM_POOL_BLOCK_SIZE 1024 + 128
@@ -40,12 +42,12 @@ struct ClientInfo
 	int CameraId;  //for cell phone, it is the id; for pc, it the camera id it want ot watch
 	CFrameRestruct FrameRestruct;
 };
-class CRecvDataProc 
+class CRecvDataProc:public CRecvDataProcIntf
 {
 public:
 	CRecvDataProc();
 	~CRecvDataProc();
-	void Init(void *pArgu, SendDataFun sendfun);
+	void Init();
 	char* GetBuff();
 	void AddClient(int sock);
 	void QuitClient(int sock);
@@ -67,7 +69,6 @@ private:
 	pthread_mutex_t RecvFrameMPLock;
 	map<int, ClientInfo> ClientMap;
 	pthread_mutex_t ClientMapLock;
-       void * pEpollServer;
-       SendDataFun SendData;     
+       //SendDataFun SendData;     
 };
 #endif

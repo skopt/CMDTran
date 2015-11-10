@@ -2,14 +2,16 @@
 #include <string.h>
 #include <cmdproc.h>
 #include "EpollServer.h"
+#include "RecvDataProc.h"
 
 int CommandResultPro(char *ret);
 
 int main()
 {
        char buff[1024];
-	CEpollServer tmp(6000);
-	tmp.Start();
+       CRecvDataProc data_proc;
+	CEpollServer server(6000, &data_proc);
+       server.Start();
 	
     while(1)
     {
