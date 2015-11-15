@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <pthread.h>
 #include <sys/time.h>
+#include "log.h"
 
 CSocketRecvTask::CSocketRecvTask(CEpollServer& epoll, epoll_event event)
 :m_Epoll(epoll),m_Event(event)
@@ -136,16 +137,6 @@ void CSocketSendTask::ProcessTask()
         delete this;
         return;
     }
-    if(true == it->second.SendProcFlag)
-    {
-        pthread_mutex_unlock(&(m_Epoll.m_SocketInfoLock));
-        delete this;
-        return;
-    }
-    else
-    {
-        it->second.SendProcFlag = true;
-    }
     pthread_mutex_unlock(&(m_Epoll.m_SocketInfoLock));
 
     pthread_mutex_lock(&(it->second.OutputChainLock));
@@ -195,8 +186,6 @@ void CSocketSendTask::ProcessTask()
         }            
     }
     pthread_mutex_unlock(&(it->second.OutputChainLock));
-    it->second.SendProcFlag = false;//lock?
-
     delete this;
 }
 CEpollServer::CEpollServer(int port, CRecvDataProcIntf* dataproc)
@@ -208,7 +197,7 @@ CEpollServer::CEpollServer(int port, CRecvDataProcIntf* dataproc)
    pthread_mutex_init(&m_SendDataMemLock, NULL);
    pthread_mutex_init(&m_SendingListLock, NULL);
    pthread_cond_init(&m_SendingListReady, NULL);
-   SendDataMem.CreatPool(MEM_POOL_BLOCK_SIZE, 10, 5);
+   SendDataMem.CreatPool(MEM_POOL_BLOCK_SIZE, 1024, 100);
 }
 bool CEpollServer::InitEvn()
 {
@@ -281,6 +270,7 @@ bool CEpollServer::AddLisSockEvent()
 
 bool CEpollServer::Start()
 {
+      LogInf("stair");
 	if(!InitEvn())
 	{
 		printf("init env failed\n");
@@ -295,8 +285,9 @@ bool CEpollServer::Start()
 		return false;
 	}
 	ThreadManager.InitPool(4);//recv threads 
-
+       LogInf("init recv thread");
        SendThreadManager.InitPool(4);//send threads
+       LogInf("init send thread");
        
 	return true;
 }

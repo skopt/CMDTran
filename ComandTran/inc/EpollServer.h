@@ -19,7 +19,6 @@ struct SocketInformation{
     int sockId;
     CMemChain OutputChain; 
     pthread_mutex_t OutputChainLock;
-    bool SendProcFlag;
     int CurrSendState;
 };
 

@@ -3,49 +3,45 @@
 #include <string.h>
 #include <pthread.h>
 
+#define BUF_LEN 2048
+CLog CLog::Instance;
+
 int getCurrentTime(char *ptime);
 
+CLog::CLog()
+{
+    char *path="./cmd.log";
+    fd = open(path, O_RDWR | O_CREAT | O_APPEND, S_IRWXU);
+    pthread_mutex_init(&flock, NULL);  
+    
+}
+CLog::~ CLog()
+{
+    close(fd);
+}
 void  CLog::Init()
 {
-    pthread_mutex_init(&flock, NULL);   
+ 
 }
 
-int CLog::LogWrite(char *info, int len)
+int CLog::LogWrite(const char* file, int line, const char* fun, const char* info)
 {
-    //init
-    char *path="./aa.log";
-    int fd = 0, ret = 0;
-    ssize_t size = 0;
-    char current_time[22];
+    int ret =0;
+    char buf[BUF_LEN];
+    memset(buf, 0, BUF_LEN);
 
-    //lock
-    pthread_mutex_lock(&flock);
+    time_t now;
+    struct tm *time_now;
+    now = time(&now);
+    time_now = localtime(&now);
 
-    //open file
-    fd = open(path, O_WRONLY | O_CREAT | O_APPEND);
-    if(fd < 0)
-    {
-        return -1;
-    }
-    //write time
-    current_time[0] = '[';
-    GetCurrentTime(current_time + 1);    
-    current_time[20] = ']';
-    current_time[21] = ' ';
-    ret = write(fd, current_time, 22);
-    //write info
-    ret = write(fd, (void *)info, (size_t)len);
-    if(ret != (ssize_t)len)
-    {
-        close(fd);
-        return -1;
-    }
+    int len = snprintf(buf, BUF_LEN, "[%02d-%02d-%02d %02d:%02d:%02d] (%s:%d)-%s--%s\n"
+        , time_now->tm_year + 1990, time_now->tm_mon, time_now->tm_mday, time_now->tm_hour
+        , time_now->tm_min, time_now->tm_sec
+        , file, line, fun, info);
+   
+    ret = write(fd, (void *)buf, (size_t)len);
 
-    //write complete
-    close(fd);
-
-    //unlock
-    pthread_mutex_unlock(&flock);
     return 0;
 }
 /*

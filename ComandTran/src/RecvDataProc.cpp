@@ -45,7 +45,7 @@ void CRecvDataProc::Init()
 	pthread_mutex_init(&ClientMapLock, NULL);
 	RecvFrameProcTM.InitPool(4);
 	//RecvFrameProcTM.GetTask_Cust = CRecvDataProc::GetTaskCustImp;
-	RecvFrameMP.CreatPool(MEM_POOL_BLOCK_SIZE, 100, 50);
+	RecvFrameMP.CreatPool(MEM_POOL_BLOCK_SIZE, 1024, 100);
 }
 char* CRecvDataProc::GetBuff()
 {

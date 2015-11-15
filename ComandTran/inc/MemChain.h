@@ -2,6 +2,7 @@
 #define _MEM_CHAIN_H_
 
 #include "MemPool.h"
+#include <stdint.h>
 typedef int (*SendCallBack)(char* buff, int len, int code);
 
 struct MemNode{
@@ -10,6 +11,7 @@ struct MemNode{
     SendCallBack CallBackFun;
     int begin;
     int len;
+    uint64_t sequence;
 };
 
 
@@ -26,6 +28,7 @@ public:
     int GetSize();
 private:
     int m_iSize;
+    uint64_t curr_sequence;
 
 public:
 
