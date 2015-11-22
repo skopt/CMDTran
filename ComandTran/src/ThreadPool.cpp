@@ -1,5 +1,5 @@
 #include "ThreadPool.h"
-
+#include "Log.h"
 CThreadPool::CThreadPool()
 {
 	RuningFlag = true;
@@ -22,12 +22,12 @@ bool CThreadPool::InitPool(int threadCount)
 	{
 		if(0 != pthread_create(&ThreadCreated[i], NULL, _ThreadRoutine, (void *)this))
 		{
-			LogE("creat thread failed, i=%d\n",i);
+			LogError("creat thread failed, i=%d",i);
 			RuningFlag = false;//stop the thread running
 			return false;
 		}		
 	}
-	LogI("creat %d threads\n",mThreadCount);
+	LogInf("creat %d threads",mThreadCount);
 
 	return true;
 }
@@ -42,12 +42,12 @@ void* CThreadPool::_ThreadRoutine(void *pArgu)
 		workTask = pthis->GetTask();
 		if(false == pthis->RuningFlag)
 		{
-			LogD("Thread %d, RuningFlag is false, exit\n", pthread_self());
+			LogDebug("Thread %d, RuningFlag is false, exit\n", pthread_self());
 			break;
 		}
 		if(NULL == workTask)
 		{
-			LogE("Process fun is null,continue\n");
+			LogDebug("Process fun is null,continue\n");
 			continue;
 		}
 		workTask->ProcessTask();
@@ -112,11 +112,11 @@ bool CThreadPool::ShutDown()
 	}
 	//send broadcast
 	pthread_cond_broadcast(&TaskListReady);
-	LogI("send exit broadcast\n");
+	LogInf("send exit broadcast");
 	for(int i = 0; i < mThreadCount; i++)
 	{
 		pthread_join(ThreadCreated[i], NULL);
 	}
-	LogI("all the thread exit\n");
+	LogInf("all the thread exit");
 	return true;
 }

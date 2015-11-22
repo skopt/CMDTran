@@ -3,8 +3,8 @@
 #include <string.h>
 #include <stdio.h>
 #include <assert.h>
+#include "Log.h"
 
-#define LogE printf
 
 CMemBlockListManager::CMemBlockListManager()
 :m_BlockCount(0)
@@ -20,7 +20,7 @@ bool CMemBlockListManager::PushHead(MemBlock *pBlock)
 {	
 	if(NULL == pBlock)
 	{
-		LogE("PushHead: param is null");
+		LogError("PushHead: param is null");
 		return false;
 	}
 
@@ -41,7 +41,7 @@ bool CMemBlockListManager::PushTrail(MemBlock *pBlock)
 {
 	if(NULL == pBlock)
 	{
-		LogE("PushHead: param is null");
+		LogError("PushHead: param is null");
 		return false;
 	}
 
@@ -64,7 +64,7 @@ MemBlock *CMemBlockListManager::GetBlockHead()
 	MemBlock *pRet = NULL;
 	if(NULL == pListHead)
 	{
-		LogE("getBlockHead,Head is null\n");
+		LogError("getBlockHead,Head is null\n");
              return NULL;
 	}
 
@@ -84,7 +84,7 @@ MemBlock* CMemBlockListManager::DeletBlockWithAddr(char *addr)
 	MemBlock *tmp = NULL, *front = NULL;
 	if(NULL == addr || NULL == pListHead)
 	{
-		LogE("DeletBlockWithAddr: param is null");
+		LogError("DeletBlockWithAddr: param is null");
 		return NULL;
 	}
 	do

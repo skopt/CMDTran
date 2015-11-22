@@ -8,7 +8,7 @@
 #include <stdio.h>
 #include <pthread.h>
 #include <sys/time.h>
-#include "log.h"
+#include "Log.h"
 
 CSocketRecvTask::CSocketRecvTask(CEpollServer& epoll, epoll_event event)
 :m_Epoll(epoll),m_Event(event)
@@ -36,15 +36,15 @@ bool CSocketRecvTask::ProcessRecvEnts(epoll_event event)
              connfd = accept(m_Epoll.GetListenSocket(), (struct sockaddr *)&v_ClntAddr,&addrlen);
              if (connfd < 0)
              {
-			printf("accept error\n");
+			LogError("accept error");
 		}
-		printf("recv a new client\n");
+		LogInf("recv a new client");
 		fcntl(connfd, F_SETFL, fcntl(connfd, F_GETFD, 0)|O_NONBLOCK);
 		ev.events = EPOLLIN | EPOLLOUT | EPOLLET;
              ev.data.fd = connfd;
 		if(epoll_ctl(m_Epoll.m_iEpollfd, EPOLL_CTL_ADD, connfd, &ev) < 0)
 		{
-			printf("Add connfd error\n");
+			LogError("Add connfd error");
 			close(connfd);
 		}
 		else
@@ -65,7 +65,7 @@ bool CSocketRecvTask::ProcessRecvEnts(epoll_event event)
 	}
 	else if(event.events&EPOLLOUT)
 	{
-		printf("-------------------EPOLLOUT-------------\n");
+		LogInf("-------------------EPOLLOUT-------------");
              map<int, SocketInformation>::iterator it;
              pthread_mutex_lock(&m_Epoll.m_SocketInfoLock);
              it = m_Epoll.m_SocketInfo.find(event.data.fd);
@@ -83,11 +83,11 @@ bool CSocketRecvTask::ProcessRecvEnts(epoll_event event)
              m_Epoll.SendThreadManager.AddTask(event.data.fd,pTask);
              pthread_mutex_unlock(&m_Epoll.m_SendingListLock);
              pthread_cond_signal(&m_Epoll.m_SendingListReady);
-             printf("-------------------EPOLLOUT end-------------\n");
+             LogInf("-------------------EPOLLOUT end-------------");
 	}
 	else
 	{
-		printf("socket %d quit1\n", event.data.fd);
+		LogInf("socket %d quit1", event.data.fd);
 		epoll_ctl(m_Epoll.m_iEpollfd, EPOLL_CTL_DEL, event.data.fd, &ev);
 		close(event.data.fd);
 		m_Epoll.RecvDataProc->QuitClient(event.data.fd);
@@ -104,7 +104,7 @@ bool CSocketRecvTask::ProcessRecvData(epoll_event event)
         nread = read(event.data.fd, buff, MEM_POOL_BLOCK_SIZE *2);
         if (nread == 0)
         {
-    	       printf("socket %d quit2\n", event.data.fd);
+    	       LogError("socket %d quit2", event.data.fd);
               close(event.data.fd);
     	       m_Epoll.RecvDataProc->QuitClient(event.data.fd);
               return false;
@@ -140,14 +140,14 @@ void CSocketSendTask::ProcessTask()
     pthread_mutex_unlock(&(m_Epoll.m_SocketInfoLock));
 
     pthread_mutex_lock(&(it->second.OutputChainLock));
-    printf("the count to process is %d\n", it->second.OutputChain.GetSize() );
+    LogInf("the count to process is %d", it->second.OutputChain.GetSize() );
     while(it->second.OutputChain.GetSize() > 0)
     {
         MemNode *node = it->second.OutputChain.GetHead();
         if(NULL == node->pBuffer)
             break;
         int ret = send(m_soket, node->pBuffer + node->begin, node->len - node->begin, MSG_NOSIGNAL);
-        printf("buffer len=%d, send len=%d\n", node->len, ret);
+        LogInf("buffer len=%d, send len=%d", node->len, ret);
         if(ret < 0)
         {
                 /*
@@ -165,7 +165,7 @@ void CSocketSendTask::ProcessTask()
         {
             node->begin = ret;
             it->second.CurrSendState = SEND_STATE_WAITING;
-            printf("do not send all data, set the state to waitting\n");
+            LogInf("do not send all data, set the state to waitting");
             break;
         }
         else if(ret > 0 && ret == node->len - node->begin)
@@ -182,7 +182,7 @@ void CSocketSendTask::ProcessTask()
             pthread_mutex_lock(&(m_Epoll.m_SendDataMemLock));
             m_Epoll.SendDataMem.FreeBlock(node->pBuffer);
             pthread_mutex_unlock(&(m_Epoll.m_SendDataMemLock));
-            printf("chain rest count %d\n", it->second.OutputChain.GetSize());
+            LogInf("chain rest count %d", it->second.OutputChain.GetSize());
         }            
     }
     pthread_mutex_unlock(&(it->second.OutputChainLock));
@@ -273,7 +273,7 @@ bool CEpollServer::Start()
       LogInf("stair");
 	if(!InitEvn())
 	{
-		printf("init env failed\n");
+		LogError("init env failed");
 		return false;
 	}
 
@@ -281,7 +281,7 @@ bool CEpollServer::Start()
 	int ret = pthread_create(&v_ThreadID, NULL, _EventRecvFun, (void *)this);
 	if(0 != ret)
 	{
-		printf("thread creat failed\n");
+		LogError("thread creat failed");
 		return false;
 	}
 	ThreadManager.InitPool(4);//recv threads 
@@ -299,12 +299,10 @@ bool CEpollServer::SendData(int sock, char *buffer, int len, SendCallBack backfu
     //get memory and copy to
     pthread_mutex_lock(&m_SendDataMemLock);
     char * buf = SendDataMem.GetBlock();
-    //char buf[1200];
-    printf("buffer got addr %x\n", buf);
     pthread_mutex_unlock(&m_SendDataMemLock);
     if(NULL == buf)
     {        
-        printf("get block failed\n");  
+        LogError("get block failed");  
         return false;
     }
     memcpy(buf, buffer, len);
@@ -341,7 +339,7 @@ void* CEpollServer::_EventRecvFun(void *pArgu)
 	int v_NumRecvFD = 0, i = 0;
 	if(!pthis->InitScoket())
 	{
-		printf("init sock failed\n");
+		LogError("init sock failed");
 		return (void *)0;
 	}
 	while(true)

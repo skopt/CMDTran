@@ -1,7 +1,11 @@
-#include "log.h"
+#include "Log.h"
 #include <time.h>
 #include <string.h>
 #include <pthread.h>
+#include <stdio.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+
 
 #define BUF_LEN 2048
 CLog CLog::Instance;
@@ -24,11 +28,18 @@ void  CLog::Init()
  
 }
 
-int CLog::LogWrite(const char* file, int line, const char* fun, const char* info)
+int CLog::LogWrite(const char* file, int line, const char* fun, const char* fmt,...)
 {
     int ret =0;
     char buf[BUF_LEN];
+    char info[BUF_LEN - 100];
     memset(buf, 0, BUF_LEN);
+    memset(info, 0, BUF_LEN - 100);
+
+    va_list argu;
+    va_start(argu, fmt);
+    vsnprintf(info, BUF_LEN - 100, fmt, argu);
+    va_end(argu);
 
     time_t now;
     struct tm *time_now;

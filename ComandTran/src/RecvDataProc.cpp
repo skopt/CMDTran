@@ -2,8 +2,8 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include "RecvDataProc.h"
+#include "Log.h"
 
-#define LogI printf
 
 CFrameProcTask::CFrameProcTask(int sock, char* frame, int len, CRecvDataProc& dataproc)
 :m_Sock(sock),m_pFrame(frame), m_FrameLen(len), m_DataProc(dataproc)
@@ -62,7 +62,7 @@ void CRecvDataProc::FreeBuff(char *pbuff)
 	pthread_mutex_lock(&RecvFrameMPLock);
 	if(!RecvFrameMP.FreeBlock(pbuff))
 	{
-		printf("Free block failed!!!\n");
+		LogError("Free block failed!!!");
 	}
 	pthread_mutex_unlock(&RecvFrameMPLock);
 }
@@ -79,7 +79,7 @@ void CRecvDataProc::AddClient(int sock)
        ClientMap.insert(pair<int, ClientInfo>(sock, newClient));
 	pthread_mutex_unlock(&ClientMapLock);
 
-	LogI("new client, socket=%d\n",sock);
+	LogInf("new client, socket=%d",sock);
 }
 
 void CRecvDataProc::QuitClient(int sock)
@@ -96,7 +96,7 @@ void CRecvDataProc::QuitClient(int sock)
 	ClientMap.erase(it);
 	pthread_mutex_unlock(&ClientMapLock);
 
-	LogI("socket quit, socket=%d\n", sock);
+	LogInf("socket quit, socket=%d", sock);
 }
 
 bool CRecvDataProc::AddRecvData(int sock, char *pbuff, int len)
@@ -166,7 +166,7 @@ void CRecvDataProc::CommandProc(int sock, char *pFrame, int FrameLen)
 			PicDataRecv(sock,pFrame,FrameLen);
 			break;
 		default:
-			printf("error code\n");
+			LogError("error code");
 			break;			
 	}
 }
@@ -174,7 +174,7 @@ bool CRecvDataProc::NewClient(int sock, char *pFrame)
 {
 	if(NULL == pFrame)
 	{
-		printf("bad param\n");
+		LogError("bad param");
 		return false;
 	}
 	//get client type
@@ -201,19 +201,19 @@ bool CRecvDataProc::NewClient(int sock, char *pFrame)
 	//response
 	//char v_cResponse[6] = {0x7E,0x00,0x06,0x00,0x00,0xA5};
 	//write(sock, v_cResponse, 6);
-	printf("new client, type=%d, Camera Id=%d\n", v_iClientType, it->second.CameraId);
+	LogInf("new client, type=%d, Camera Id=%d", v_iClientType, it->second.CameraId);
 	return true;
 }
 int CRecvDataProc::SendCallBakcFun(char* buff, int len, int code)
 {
-    printf("frame send result %d\n", code);
+    LogInf("frame send result %d", code);
     return 0;
 }
 void CRecvDataProc::PicDataRecv(int sock, char *pFrame, int FrameLen)
 {
 	if(NULL == pFrame)
 	{
-		printf("bad param\n");
+		LogError("bad param");
 		return;
 	}
 	//get the phone client camera id
@@ -245,7 +245,7 @@ void CRecvDataProc::ResetCameraId(int sock, char *pFrame, int FrameLen)
 {
 	if(NULL == pFrame)
 	{
-		printf("bad param\n");
+		LogError("bad param");
 		return;
 	}
 	map<int, ClientInfo>::iterator it;
@@ -258,5 +258,5 @@ void CRecvDataProc::ResetCameraId(int sock, char *pFrame, int FrameLen)
 	}
 	it->second.CameraId = ((unsigned char)pFrame[4] * 256) + (unsigned char)pFrame[5];
 	pthread_mutex_unlock(&ClientMapLock);
-	printf("socket %d change camera id to %d\n", sock, it->second.CameraId);
+	LogInf("socket %d change camera id to %d", sock, it->second.CameraId);
 }

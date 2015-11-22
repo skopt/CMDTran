@@ -7,25 +7,25 @@
 #define FRAME_LEN_MAX 1024 + 100
 class CFrameRestruct{
 public:
-      CFrameRestruct();
-	~CFrameRestruct();
-	int RestructFrame(int sock, char *pRecvBuffer, int RecvLen);
+    CFrameRestruct();
+    ~CFrameRestruct();
+    int RestructFrame(int sock, char *pRecvBuffer, int RecvLen);
 private:
-	int GetFrame(int sock, char *pRecvBuffer, int RecvLen);
+    int GetFrame(int sock, char *pRecvBuffer, int RecvLen);
     char* GetBuffer();
-	void AddToList(int sock, char *pFrame, int len);
-	int GetHeadIndex(int CurIndex, char *pRecvBuffer, int RecvLen);
-	int GetFrameLen(int CurIndex, char *pRecvBuffer, int RecvLen);
-	void CopyRestToExitBuff(int CurIndex, char *pRecvBuffer, int RecvLen);
-	
-	bool CheckSum(int CurIndex, char *pRecfBuffer, int FrameLen);
-	void SaveFrame(int sock, int CurIndex, char *pRecvBuffer, int FrameLen);
+    void AddToList(int sock, char *pFrame, int len);
+    int GetHeadIndex(int CurIndex, char *pRecvBuffer, int RecvLen);
+    int GetFrameLen(int CurIndex, char *pRecvBuffer, int RecvLen);
+    void CopyRestToExitBuff(int CurIndex, char *pRecvBuffer, int RecvLen);
+
+    bool CheckSum(int CurIndex, char *pRecfBuffer, int FrameLen);
+    void SaveFrame(int sock, int CurIndex, char *pRecvBuffer, int FrameLen);
 
 public:
-	void *pRecvDataProc;
+    void *pRecvDataProc;
 
 private:
-	char m_pExitBuffer[EXIT_BUFFER_LEN];
-	int m_iExitLen;	
+    char m_pExitBuffer[EXIT_BUFFER_LEN];
+    int m_iExitLen;	
 };
 #endif

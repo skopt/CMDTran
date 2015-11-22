@@ -3,9 +3,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <assert.h>
-
-#define LogE printf
-#define LogI printf
+#include "Log.h"
 
 CMemPool::CMemPool()
 :m_BlockCount(0),CreatedFlag(false),GrowCount(0)
@@ -31,12 +29,12 @@ bool CMemPool::CreatPool(int blockSize, int blockCount, int step)
 	bool ret = ExtendPool(BlockSize, BlockCount);
 	if(false == ret)
 	{
-		LogE("CreatPool: extend pool failed");
+		LogError("CreatPool: extend pool failed");
 		return false;
 	}
        
        m_BlockCount += BlockCount;
-       printf("ExtendPool succeed, the count is %d\n", m_BlockCount);
+       LogError("ExtendPool succeed, the count is %d", m_BlockCount);
 	CreatedFlag = true;
 	return true;
 }
@@ -48,15 +46,15 @@ char* CMemPool::GetBlock()
 	{
 		if(!ExtendPool(BlockSize,GrowStep))
 		{
-			LogE("GetBlock: extend poll failed\n");
+			LogError("GetBlock: extend poll failed");
 			return NULL;
 		}             
 		m_BlockCount += GrowStep;
-             LogI("Extend Pool succeed, curren block cout is  %d\n", m_BlockCount);
+             LogInf("Extend Pool succeed, curren block cout is  %d", m_BlockCount);
 		pRet = FreeList.GetBlockHead();
 		if(NULL == pRet)
 		{
-			LogE("Get block: get null even extend the pool\n");
+			LogError("Get block: get null even extend the pool");
 			return NULL;
 		}
 	}
@@ -64,7 +62,7 @@ char* CMemPool::GetBlock()
 	UsedList.PushTrail(pRet);
 	if(NULL == pRet->pBlock)
 	{
-	    LogI("pRet->pBlock is null\n");
+	    LogError("pRet->pBlock is null");
 	    return NULL;
 	}
 	memset(pRet->pBlock, 0, BlockSize); 
@@ -76,7 +74,7 @@ bool CMemPool::FreeBlock(char *addr)
 	MemBlock *block = UsedList.DeletBlockWithAddr(addr);
 	if(NULL == block)
 	{
-		LogI("FreeBlock error: get block null\n");
+		LogError("FreeBlock error: get block null");
 		return false;
 	}
 	//init the block
@@ -162,14 +160,14 @@ bool CMemPool::ExtendPool(int size, int count)
 {
 	if(GrowCount++ >= GROW_COUNT_MAX)
 	{
-		LogE("Grow Count max\n");
+		LogError("Grow Count max");
 		return false;
 	}
 	ContnBlockInf *pcblock = GetContnBlock(size,count);
 	ContnBlockInf *ptmp = NULL;
 	if(NULL == pcblock)
 	{
-		LogE("ExtendPool: the continue block is null\n");
+		LogError("ExtendPool: the continue block is null");
 		return false;
 	}
 	//add to the ContnBlockList	

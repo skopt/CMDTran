@@ -3,18 +3,21 @@
 #include <stdio.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <stdarg.h>
 
 /*
 must be called first
 */
-#define LogInf(info) CLog::Instance.LogWrite(__FILE__, __LINE__, __FUNCTION__, info);
+#define LogInf(...) CLog::Instance.LogWrite(__FILE__, __LINE__, __FUNCTION__, __VA_ARGS__);
+#define LogDebug(...) CLog::Instance.LogWrite(__FILE__, __LINE__, __FUNCTION__, __VA_ARGS__);
+#define LogError(...) CLog::Instance.LogWrite(__FILE__, __LINE__, __FUNCTION__, __VA_ARGS__);
 
 class CLog
 {
 public:
     CLog();
     ~CLog();
-    int LogWrite(const char* file, int line, const char* fun, const char* info); 
+    int LogWrite(const char* file, int line, const char* fun, const char* fmt, ...); 
 private:
     void Init();
     int GetCurrentTime(char *ptime);

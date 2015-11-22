@@ -8,11 +8,12 @@ int CommandResultPro(char *ret);
 
 int main()
 {
-       char buff[1024];
-       CRecvDataProc data_proc;
-	CEpollServer server(6000, &data_proc);
-       server.Start();
-	
+    CRecvDataProc data_proc;
+    CEpollServer server(6000, &data_proc);
+    server.Start();
+
+    //test
+    char buff[1024];
     while(1)
     {
         scanf("%s", buff);
@@ -20,8 +21,8 @@ int main()
     }
     char *pComand = "ls";
     CommandPro(pComand,CommandResultPro);
-	
-	return 1;
+
+    return 1;
 }
 
 int CommandResultPro(char *ret)
