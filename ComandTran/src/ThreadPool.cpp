@@ -7,7 +7,6 @@ CThreadPool::CThreadPool(string name)
 {
 	RuningFlag = true;
 	GetTask_Cust = NULL;
-	//TaskList.clear();
 }
 
 CThreadPool::~ CThreadPool()
@@ -16,9 +15,6 @@ CThreadPool::~ CThreadPool()
 
 bool CThreadPool::InitPool(int threadCount)
 {
-    pthread_mutex_init(&TaskListLock, NULL);
-    pthread_cond_init(&TaskListReady, NULL);
-
     mThreadCount = threadCount;
     ThreadCreated = new pthread_t[mThreadCount];
     for(int i = 0; i < mThreadCount; i++)
@@ -73,8 +69,7 @@ CTask* CThreadPool::GetTask()
     	TaskList.Sleep();
     	//LogI("Thread %d weakup\n", pthread_self());
     }
-    //LogD("Thread %d to work\n", pthread_self());
-
+    
     if(!RuningFlag)//exit
     {
     	return ret;
@@ -82,21 +77,7 @@ CTask* CThreadPool::GetTask()
     
     if(!TaskList.Pop(ret))
          ret = NULL;
-    /*
-    else
-    {
-    	typename list< CTask* >::iterator it;
-    	for(it = TaskList.begin(); it != TaskList.end(); it++)
-    	{
-    		if(GetTask_Cust((void *)(&(*it))))
-    		{
-    			ret = *it;
-    			TaskList.erase(it);
-    			break;
-    		}
-    	}
-    }
-    */
+    
     return ret;
 }
 
@@ -108,7 +89,6 @@ bool CThreadPool::ShutDown()
     	RuningFlag = false;
     }
     //send broadcast
-    pthread_cond_broadcast(&TaskListReady);
     LogInf("send exit broadcast");
     for(int i = 0; i < mThreadCount; i++)
     {

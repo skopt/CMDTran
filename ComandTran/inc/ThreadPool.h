@@ -22,8 +22,6 @@ public:
 	CThreadPool(string name);
 	~CThreadPool();
 private:
-	pthread_mutex_t TaskListLock;  
-       pthread_cond_t TaskListReady; 
 	int RuningFlag;
 	CLockFreeQueue< CTask* > TaskList;
 	pthread_t *ThreadCreated;        //all the thread created
