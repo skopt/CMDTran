@@ -12,7 +12,7 @@ using namespace std;
 class CMasterWorkPool
 {
 public:
-    CMasterWorkPool();
+    CMasterWorkPool(string name);
     ~CMasterWorkPool();
     bool InitPool(int workercount);
     bool AddTask(int id, CTask* addTask);
@@ -26,7 +26,8 @@ private:
     typedef map<int, CThreadPool> ThreadMap;
     //typedef ThreadMap::value_type ThreadMapValue;
     ThreadMap m_ThreadMap;
-    pthread_mutex_t m_ThreadMapLock;       
+    pthread_mutex_t m_ThreadMapLock;
+    string m_Name;
 };
 
 #endif

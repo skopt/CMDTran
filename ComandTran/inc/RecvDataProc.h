@@ -60,6 +60,7 @@ private:
 	bool NewClient(int sock, char *pFrame);	
 	void PicDataRecv(int sock, char *pFrame, int FrameLen);
 	void ResetCameraId(int sock, char *pFrame, int FrameLen);
+       void FrameInit(char* frame, int len, unsigned char code);
        static int SendCallBakcFun(char* buff, int len, int code);
 public:
       friend class CFrameProcTask;

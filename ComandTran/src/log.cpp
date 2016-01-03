@@ -28,7 +28,7 @@ void  CLog::Init()
  
 }
 
-int CLog::LogWrite(const char* file, int line, const char* fun, const char* fmt,...)
+int CLog::LogWrite(int tid, const char* file, int line, const char* fun, const char* fmt,...)
 {
     int ret =0;
     char buf[BUF_LEN];
@@ -46,10 +46,10 @@ int CLog::LogWrite(const char* file, int line, const char* fun, const char* fmt,
     now = time(&now);
     time_now = localtime(&now);
 
-    int len = snprintf(buf, BUF_LEN, "[%02d-%02d-%02d %02d:%02d:%02d] (%s:%d)-%s--%s\n"
+    int len = snprintf(buf, BUF_LEN, "[%02d-%02d-%02d %02d:%02d:%02d] (%s:%d)-%d-%s--%s\n"
         , time_now->tm_year + 1990, time_now->tm_mon, time_now->tm_mday, time_now->tm_hour
         , time_now->tm_min, time_now->tm_sec
-        , file, line, fun, info);
+        , file, line, tid, fun, info);
    
     ret = write(fd, (void *)buf, (size_t)len);
 

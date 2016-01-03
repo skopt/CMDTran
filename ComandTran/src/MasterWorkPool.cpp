@@ -1,8 +1,9 @@
 #include "MasterWorkPool.h"
+#include "BasicFun.h"
 
 
-CMasterWorkPool::CMasterWorkPool()
-:m_iWorkerCount(0)
+CMasterWorkPool::CMasterWorkPool(string name)
+:m_iWorkerCount(0), m_Name(name)
 {
 }
 
@@ -17,7 +18,7 @@ bool CMasterWorkPool::InitPool(int workercount)
     m_ThreadMap.clear();
     for(int i = 0; i < workercount; i++)
     {
-        CThreadPool worker;
+        CThreadPool worker(m_Name + "_" + Int2String(i));
         m_ThreadMap.insert(pair<int, CThreadPool>(i, worker));
     }
     for(int i = 0; i < workercount; i++)

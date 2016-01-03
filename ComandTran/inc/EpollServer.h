@@ -15,7 +15,15 @@
 #define SEND_STATE_ALLOW 0
 #define SEND_STATE_WAITING 1
 
-struct SocketInformation{
+class SocketInformation{
+public:
+    SocketInformation()
+        :sockId(0),CurrSendState(0)
+    {
+    } 
+    ~SocketInformation(){}
+
+public:
     int sockId;
     CMemChain OutputChain; 
     pthread_mutex_t OutputChainLock;
@@ -54,7 +62,7 @@ class CEpollServer
 {
 public:
 	int m_iEpollfd;
-       map<int, SocketInformation> m_SocketInfo;
+       map<int, SocketInformation*> m_SocketInfo;
        pthread_mutex_t m_SocketInfoLock;
 private:
 	int m_iListenSock;
@@ -90,6 +98,7 @@ private:
 	bool ProcessRecvEnts(epoll_event event);
 	bool ProcessRecvData(epoll_event event);
        bool ProcessSendData(epoll_event event);
+       void RemoveSocket(int sock);
        friend class CSocketRecvTask;
        friend class CSocketSendTask;
        

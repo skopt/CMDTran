@@ -3,6 +3,8 @@
 
 #include "MemPool.h"
 #include <stdint.h>
+#define SEND_SUCCEED 0
+#define SEND_FAILD 1
 typedef int (*SendCallBack)(char* buff, int len, int code);
 
 struct MemNode{

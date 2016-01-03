@@ -1,7 +1,7 @@
 #include "FrameRestruct.h"
 #include "RecvDataProc.h"
 #include <string.h>
-
+#include "Log.h"
 
 #define LogI printf
 
@@ -62,8 +62,9 @@ int CFrameRestruct::RestructFrame(int sock, char *pRecvBuffer, int RecvLen)
 			continue;
 		}
 		//save frame
-		SaveFrame(sock,v_iCurIndex, pRecvBuffer,v_iFrameLen);
-		v_iFrameCount++;
+		if(SaveFrame(sock,v_iCurIndex, pRecvBuffer,v_iFrameLen))
+		    v_iFrameCount++;
+        
 		v_iCurIndex += v_iFrameLen;
 	}
 
@@ -178,13 +179,13 @@ bool CFrameRestruct::CheckSum(int CurIndex, char *pRecfBuffer, int FrameLen)
 	}
 	return ret;
 }
-void CFrameRestruct::SaveFrame(int sock, int CurIndex, char *pRecvBuffer, int FrameLen)
+bool CFrameRestruct::SaveFrame(int sock, int CurIndex, char *pRecvBuffer, int FrameLen)
 {
 	char *pFrame = GetBuffer();
 	if(NULL == pFrame)
 	{
-		printf("do not get buffer\n");
-		return;
+		LogError("do not get buffer");
+		return false;
 	}
 	if(CurIndex < m_iExitLen && CurIndex + FrameLen <= m_iExitLen)
 	{
@@ -200,4 +201,5 @@ void CFrameRestruct::SaveFrame(int sock, int CurIndex, char *pRecvBuffer, int Fr
 		memcpy(pFrame, &pRecvBuffer[CurIndex - m_iExitLen], FrameLen);
 	}
        AddToList(sock, pFrame, FrameLen);
+       return true;
 }

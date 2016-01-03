@@ -33,6 +33,7 @@ void CFrameProcTask::ProcessTask()
 }
 
 CRecvDataProc::CRecvDataProc()
+:RecvFrameProcTM("DataProcThreads")
 {
     Init();
 }
@@ -45,7 +46,7 @@ void CRecvDataProc::Init()
     pthread_mutex_init(&ClientMapLock, NULL);
     RecvFrameProcTM.InitPool(4);
     //RecvFrameProcTM.GetTask_Cust = CRecvDataProc::GetTaskCustImp;
-    RecvFrameMP.CreatPool(MEM_POOL_BLOCK_SIZE, 1024, 100);
+    RecvFrameMP.CreatPool(MEM_POOL_BLOCK_SIZE, 1024*100, 1024*10);
 }
 char* CRecvDataProc::GetBuff()
 {
@@ -198,15 +199,14 @@ bool CRecvDataProc::NewClient(int sock, char *pFrame)
     it->second.ClientType = v_iClientType;
     it->second.CameraId = ((unsigned char)pFrame[5] * 256) + (unsigned char)pFrame[6];
     pthread_mutex_unlock(&ClientMapLock);
-    //response
-    //char v_cResponse[6] = {0x7E,0x00,0x06,0x00,0x00,0xA5};
-    //write(sock, v_cResponse, 6);
+    //ack
+    char login_ack_frame[5] = {0x7E, 0x00, 0x05,0x90,0xA5};
+    SendData(sock, login_ack_frame, 5, NULL);
     LogInf("new client, type=%d, Camera Id=%d", v_iClientType, it->second.CameraId);
     return true;
 }
 int CRecvDataProc::SendCallBakcFun(char* buff, int len, int code)
 {
-    LogInf("frame send result %d", code);
     return 0;
 }
 void CRecvDataProc::PicDataRecv(int sock, char *pFrame, int FrameLen)
@@ -223,6 +223,13 @@ void CRecvDataProc::PicDataRecv(int sock, char *pFrame, int FrameLen)
     {
     	return;
     }
+    //ack
+    char ack_frame[7];
+    FrameInit(ack_frame, 7, 0x90);
+    ack_frame[4] = pFrame[6];
+    ack_frame[5] = pFrame[7];
+    //SendData(sock, ack_frame, 7, NULL);
+    //transfer
     int v_iCameraId = v_clientIt->second.CameraId;
 
     map<int, ClientInfo>::iterator it;
@@ -253,4 +260,12 @@ void CRecvDataProc::ResetCameraId(int sock, char *pFrame, int FrameLen)
     it->second.CameraId = ((unsigned char)pFrame[4] * 256) + (unsigned char)pFrame[5];
     pthread_mutex_unlock(&ClientMapLock);
     LogInf("socket %d change camera id to %d", sock, it->second.CameraId);
+}
+void CRecvDataProc::FrameInit(char* frame, int len, unsigned char code)
+{
+    frame[0] = 0x7E;
+    frame[1] = (unsigned char) (len / 256);
+    frame[2] = (unsigned char) (len % 256);
+    frame[3] = code;
+    frame[len - 1] = 0xA5;
 }

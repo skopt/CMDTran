@@ -4,7 +4,7 @@
 #include "DataStructDef.h"
 #include "MemBlockListManager.h"
 /*------------------Define-------------------------*/
-#define GROW_COUNT_MAX 10
+#define GROW_COUNT_MAX 20
 struct ContnBlockInf
 {
 	MemBlock *pMemBlockList;

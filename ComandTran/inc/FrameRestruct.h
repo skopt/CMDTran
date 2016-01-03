@@ -19,7 +19,7 @@ private:
     void CopyRestToExitBuff(int CurIndex, char *pRecvBuffer, int RecvLen);
 
     bool CheckSum(int CurIndex, char *pRecfBuffer, int FrameLen);
-    void SaveFrame(int sock, int CurIndex, char *pRecvBuffer, int FrameLen);
+    bool SaveFrame(int sock, int CurIndex, char *pRecvBuffer, int FrameLen);
 
 public:
     void *pRecvDataProc;

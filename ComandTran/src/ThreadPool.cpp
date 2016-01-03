@@ -1,6 +1,9 @@
 #include "ThreadPool.h"
 #include "Log.h"
-CThreadPool::CThreadPool()
+#include <sys/prctl.h>
+
+CThreadPool::CThreadPool(string name)
+:m_Name(name)
 {
 	RuningFlag = true;
 	GetTask_Cust = NULL;
@@ -36,6 +39,7 @@ void* CThreadPool::_ThreadRoutine(void *pArgu)
 {
     CThreadPool *pthis = (CThreadPool *)pArgu;
     CTask* workTask;
+    prctl(PR_SET_NAME, pthis->m_Name.c_str(), NULL, NULL, NULL);
     //get task
     while(true)
     {
@@ -81,11 +85,11 @@ CTask* CThreadPool::GetTask()
     	pthread_mutex_unlock(&TaskListLock);
     	return ret;
     }
-       if(NULL == GetTask_Cust)
-       {
-    	ret = TaskList.front();
-    	TaskList.pop_front();
-       }
+    if(NULL == GetTask_Cust)
+    {
+	ret = TaskList.front();
+	TaskList.pop_front();
+    }
     else
     {
     	typename list< CTask* >::iterator it;

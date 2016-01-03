@@ -5,6 +5,7 @@ using namespace std;
 #include <list>  
 #include <map>
 #include <stdio.h>
+#include <string>
 
 #include "Task.h"
 //---------------define---------------------------
@@ -17,7 +18,7 @@ typedef bool (*GetTaskCustomized)(void *pArgu);
 class CThreadPool
 {
 public:
-	CThreadPool();
+	CThreadPool(string name);
 	~CThreadPool();
 private:
 	pthread_mutex_t TaskListLock;  
@@ -26,6 +27,7 @@ private:
 	list< CTask* > TaskList;
 	pthread_t *ThreadCreated;        //all the thread created
 	int mThreadCount;                    //thread count
+	string m_Name;
 public:
       	GetTaskCustomized  GetTask_Cust;
 private:
