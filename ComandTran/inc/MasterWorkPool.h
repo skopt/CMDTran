@@ -23,7 +23,7 @@ public:
 
 private:
     int m_iWorkerCount;
-    typedef map<int, CThreadPool> ThreadMap;
+    typedef map<int, CThreadPool*> ThreadMap;
     //typedef ThreadMap::value_type ThreadMapValue;
     ThreadMap m_ThreadMap;
     pthread_mutex_t m_ThreadMapLock;

@@ -64,8 +64,8 @@ MemBlock *CMemBlockListManager::GetBlockHead()
     MemBlock *pRet = NULL;
     if(NULL == pListHead)
     {
-    	LogError("getBlockHead,Head is null\n");
-             return NULL;
+        LogError("getBlockHead,Head is null\n");
+        return NULL;
     }
 
     pRet = pListHead;
@@ -97,8 +97,8 @@ MemBlock* CMemBlockListManager::DeletBlockWithAddr(char *addr)
     		break;//tmp is return
     	}
     	//the others
-             front = pListHead;
-          tmp = front->pNext;
+       front = pListHead;
+       tmp = front->pNext;
     	while(tmp != NULL)
     	{
     		if(tmp->pBlock != NULL && tmp->pBlock == addr)

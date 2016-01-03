@@ -1,0 +1,15 @@
+----------------Frame-----------------
+Head(1 byte)  Len(2 bytes)  Code(1 byte)  Data(n bytes)  End(1 byte)
+0x7E              xx xx        xx         xx(n)          0xA5
+
+----------------Terminal and Server--------------------
+1.login
+  code: 0x00
+  data: 1 byte 0:CLIENT_TYPE_PHONE, 1:CLIENT_TYPE_PC
+  ack code: 0x80
+  data: null 
+2.picture
+  code: 0x10
+  data: total frames(2 bytes) index(2 bytes) data
+  ack code:0x90
+  data: null

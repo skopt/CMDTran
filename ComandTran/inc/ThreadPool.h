@@ -8,6 +8,7 @@ using namespace std;
 #include <string>
 
 #include "Task.h"
+#include "LockFreeQueue.h"
 //---------------define---------------------------
 typedef void (*TaskProcess)(void *pArgu);
 typedef bool (*GetTaskCustomized)(void *pArgu);
@@ -24,7 +25,7 @@ private:
 	pthread_mutex_t TaskListLock;  
        pthread_cond_t TaskListReady; 
 	int RuningFlag;
-	list< CTask* > TaskList;
+	CLockFreeQueue< CTask* > TaskList;
 	pthread_t *ThreadCreated;        //all the thread created
 	int mThreadCount;                    //thread count
 	string m_Name;

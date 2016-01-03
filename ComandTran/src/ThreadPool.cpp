@@ -7,7 +7,7 @@ CThreadPool::CThreadPool(string name)
 {
 	RuningFlag = true;
 	GetTask_Cust = NULL;
-	TaskList.clear();
+	//TaskList.clear();
 }
 
 CThreadPool::~ CThreadPool()
@@ -61,35 +61,28 @@ void* CThreadPool::_ThreadRoutine(void *pArgu)
 
 bool CThreadPool::AddTask(CTask* addTask)
 {
-    pthread_mutex_lock(&TaskListLock);
-    TaskList.push_back(addTask);
-    pthread_mutex_unlock(&TaskListLock);
-    pthread_cond_signal(&TaskListReady);
-    return true;
+    return TaskList.Push(addTask);
 }
 
 CTask* CThreadPool::GetTask()
 {
     CTask* ret;
-    pthread_mutex_lock(&TaskListLock);
-    while(TaskList.empty() && RuningFlag)
+    while(TaskList.IsEmpty() && RuningFlag)
     {
     	//LogI("Thread %d is waiting\n", pthread_self());
-    	pthread_cond_wait(&TaskListReady, &TaskListLock);
+    	TaskList.Sleep();
     	//LogI("Thread %d weakup\n", pthread_self());
     }
-       //LogD("Thread %d to work\n", pthread_self());
+    //LogD("Thread %d to work\n", pthread_self());
 
     if(!RuningFlag)//exit
     {
-    	pthread_mutex_unlock(&TaskListLock);
     	return ret;
     }
-    if(NULL == GetTask_Cust)
-    {
-	ret = TaskList.front();
-	TaskList.pop_front();
-    }
+    
+    if(!TaskList.Pop(ret))
+         ret = NULL;
+    /*
     else
     {
     	typename list< CTask* >::iterator it;
@@ -103,7 +96,7 @@ CTask* CThreadPool::GetTask()
     		}
     	}
     }
-    pthread_mutex_unlock(&TaskListLock);
+    */
     return ret;
 }
 
