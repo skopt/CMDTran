@@ -172,9 +172,7 @@ void CSocketSendTask::ProcessTask()
             if(node->CallBackFun)
                 node->CallBackFun(node->pBuffer, node->len, 0);
             //free the buffer to manager
-            pthread_mutex_lock(&(m_Epoll.m_SendDataMemLock));
             m_Epoll.SendDataMem.FreeBlock(node->pBuffer);
-            pthread_mutex_unlock(&(m_Epoll.m_SendDataMemLock));
         }            
     }
     pthread_mutex_unlock(&(it->second->OutputChainLock));
@@ -187,7 +185,6 @@ CEpollServer::CEpollServer(int port, CRecvDataProcIntf* dataproc)
     RecvDataProc = dataproc;
     RecvDataProc->SetEpoll(this);
     pthread_mutex_init(&m_SocketInfoLock, NULL);
-    pthread_mutex_init(&m_SendDataMemLock, NULL);
     pthread_mutex_init(&m_SendingListLock, NULL);
     pthread_cond_init(&m_SendingListReady, NULL);
     SendDataMem.CreatPool(MEM_POOL_BLOCK_SIZE, 1024*100, 1024*10);
@@ -290,9 +287,7 @@ bool CEpollServer::SendData(int sock, char *buffer, int len, SendCallBack backfu
     if(NULL == buffer || len <= 0 || len > MEM_POOL_BLOCK_SIZE)
         return false;
     //get memory and copy to
-    pthread_mutex_lock(&m_SendDataMemLock);
     char * buf = SendDataMem.GetBlock();
-    pthread_mutex_unlock(&m_SendDataMemLock);
     if(NULL == buf)
     {        
         LogError("get block failed");  
@@ -306,9 +301,7 @@ bool CEpollServer::SendData(int sock, char *buffer, int len, SendCallBack backfu
     if(it == m_SocketInfo.end())
     {
         pthread_mutex_unlock(&m_SocketInfoLock);
-        pthread_mutex_lock(&m_SendDataMemLock);
         SendDataMem.FreeBlock(buf);
-        pthread_mutex_unlock(&m_SendDataMemLock);
         return false;
     }
     pthread_mutex_unlock(&m_SocketInfoLock);
@@ -350,9 +343,7 @@ void CEpollServer::RemoveSocket(int sock)
         if(node->CallBackFun)
                 node->CallBackFun(node->pBuffer, node->len, SEND_FAILD);
         //free the buffer to manager
-        pthread_mutex_lock(&m_SendDataMemLock);
         SendDataMem.FreeBlock(node->pBuffer);
-        pthread_mutex_unlock(&m_SendDataMemLock);
         socket_closed->OutputChain.DeleteHead();
     }
     pthread_mutex_unlock(&(socket_closed->OutputChainLock));

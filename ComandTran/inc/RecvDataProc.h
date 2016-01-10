@@ -53,22 +53,22 @@ public:
 	void QuitClient(int sock);
 	bool AddRecvData(int sock, char *pbuff, int len);
 	void AddFrameProcTask(int sock, char* frame, int len);
+    void FreeBuff(char *pbuff);
 	static bool GetTaskCustImp(void *pArgu);
 private:
-	void FreeBuff(char *pbuff);
-       void CommandProc(int sock, char *pFrame, int FrameLen);	
+    void CommandProc(int sock, char *pFrame, int FrameLen);	
 	bool NewClient(int sock, char *pFrame);	
 	void PicDataRecv(int sock, char *pFrame, int FrameLen);
 	void ResetCameraId(int sock, char *pFrame, int FrameLen);
-       void FrameInit(char* frame, int len, unsigned char code);
-       static int SendCallBakcFun(char* buff, int len, int code);
+    void FrameInit(char* frame, int len, unsigned char code);
+    static int SendCallBakcFun(char* buff, int len, int code);
 public:
       friend class CFrameProcTask;
 private:	
 	CMasterWorkPool RecvFrameProcTM;
 	CMemPool RecvFrameMP;
-	pthread_mutex_t RecvFrameMPLock;
-	map<int, ClientInfo> ClientMap;
+
+	map<int, ClientInfo*> ClientMap;
 	pthread_mutex_t ClientMapLock;
        //SendDataFun SendData;     
 };

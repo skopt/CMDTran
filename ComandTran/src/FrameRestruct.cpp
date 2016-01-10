@@ -8,7 +8,7 @@
 CFrameRestruct::CFrameRestruct()
 :m_iExitLen(0)
 {
-	memset(&m_pExitBuffer, 0, EXIT_BUFFER_LEN);
+    memset(m_pExitBuffer, 0, EXIT_BUFFER_LEN);
 }
 
 CFrameRestruct::~CFrameRestruct()
@@ -83,6 +83,19 @@ char* CFrameRestruct::GetBuffer()
 		return NULL;
 	}
 	return v_pRecvDataProc->GetBuff();
+}
+void CFrameRestruct::FreeBuffer(char* buff)
+{
+	if(NULL == pRecvDataProc)
+		return ;
+	
+	CRecvDataProc *v_pRecvDataProc = (CRecvDataProc *) pRecvDataProc;
+	if(NULL == v_pRecvDataProc)
+	{
+		LogI("v_pRecvDataProc is null\n");
+		return ;
+	}
+       v_pRecvDataProc->FreeBuff(buff);
 }
 void CFrameRestruct::AddToList(int sock, char *pFrame, int len)
 {
@@ -182,6 +195,7 @@ bool CFrameRestruct::CheckSum(int CurIndex, char *pRecfBuffer, int FrameLen)
 bool CFrameRestruct::SaveFrame(int sock, int CurIndex, char *pRecvBuffer, int FrameLen)
 {
 	char *pFrame = GetBuffer();
+	//char pFrame[2048];// = GetBuffer();
 	if(NULL == pFrame)
 	{
 		LogError("do not get buffer");
@@ -200,6 +214,7 @@ bool CFrameRestruct::SaveFrame(int sock, int CurIndex, char *pRecvBuffer, int Fr
 	{
 		memcpy(pFrame, &pRecvBuffer[CurIndex - m_iExitLen], FrameLen);
 	}
+       //FreeBuffer(pFrame);
        AddToList(sock, pFrame, FrameLen);
        return true;
 }

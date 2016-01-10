@@ -26,7 +26,7 @@ bool CMemBlockListManager::PushHead(MemBlock *pBlock)
 
     if(pListHead == NULL)//the list is null, let head and trail equal pblock
     {
-             pListHead = pBlock;
+        pListHead = pBlock;
     	pListTrail = pBlock;
     	pListHead->pNext = NULL;
     }
@@ -55,7 +55,7 @@ bool CMemBlockListManager::PushTrail(MemBlock *pBlock)
     	pListTrail->pNext = pBlock;
     	pListTrail = pBlock;
     }
-       assert(pListTrail);
+    assert(pListTrail);
     pListTrail->pNext = NULL;//reinit
     return true;
 }

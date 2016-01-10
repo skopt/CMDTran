@@ -3,8 +3,6 @@
 /*------------------Include-------------------------*/
 #include "DataStructDef.h"
 #include "MemBlockListManager.h"
-#include "LockFreeQueue.h"
-
 /*------------------Define-------------------------*/
 #define GROW_COUNT_MAX 20
 struct ContnBlockInf
@@ -23,13 +21,13 @@ public:
     char* GetBlock();
     bool FreeBlock(char *addr);
     long GetBlockSize();
-    int GetBlockTotalCount();
-    int GetBlockFreeCount();
+    int GetSize();
 private:
     virtual void FreeMem();
+    ContnBlockInf* GetContnBlock(int blockSize, int blockCount);
     bool ExtendPool(int size, int count);
 public:
-    int m_BlockTotalCount;//current block size
+    int m_BlockCount;//current block size
 	
 private:
     long BlockSize;
@@ -37,6 +35,8 @@ private:
     int GrowStep;
     int GrowCount;
     bool CreatedFlag;
-    CLockFreeQueue<char*>* UnUsedBlockQueue;
+    ContnBlockInf *ContnBlockList;
+    CMemBlockListManager FreeList;           
+    CMemBlockListManager UsedList;
 };
 #endif

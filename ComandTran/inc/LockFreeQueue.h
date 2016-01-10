@@ -3,8 +3,9 @@
 
 #include <stdint.h>
 #include <string.h>
+#include <sched.h>
 
-#define QUEUE_LEN 1024*1024
+#define QUEUE_LEN 20*1024*1024
 #define CAS(ptr, oldVal, newVal) __sync_bool_compare_and_swap((ptr), (oldVal), (newVal))
 #define AtomicAdd(ptr,  cout) __sync_add_and_fetch((ptr),  (cout))
 #define AtomicSub(ptr,  cout) __sync_sub_and_fetch((ptr),  (cout))

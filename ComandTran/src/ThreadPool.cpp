@@ -7,6 +7,7 @@ CThreadPool::CThreadPool(string name)
 {
 	RuningFlag = true;
 	GetTask_Cust = NULL;
+	TaskList.clear();
 }
 
 CThreadPool::~ CThreadPool()
@@ -15,6 +16,9 @@ CThreadPool::~ CThreadPool()
 
 bool CThreadPool::InitPool(int threadCount)
 {
+    pthread_mutex_init(&TaskListLock, NULL);
+    pthread_cond_init(&TaskListReady, NULL);
+
     mThreadCount = threadCount;
     ThreadCreated = new pthread_t[mThreadCount];
     for(int i = 0; i < mThreadCount; i++)
@@ -57,27 +61,49 @@ void* CThreadPool::_ThreadRoutine(void *pArgu)
 
 bool CThreadPool::AddTask(CTask* addTask)
 {
-    return TaskList.Push(addTask);
+    pthread_mutex_lock(&TaskListLock);
+    TaskList.push_back(addTask);
+    pthread_mutex_unlock(&TaskListLock);
+    pthread_cond_signal(&TaskListReady);
+    return true;
 }
 
 CTask* CThreadPool::GetTask()
 {
     CTask* ret;
-    while(TaskList.IsEmpty() && RuningFlag)
+    pthread_mutex_lock(&TaskListLock);
+    while(TaskList.empty() && RuningFlag)
     {
     	//LogI("Thread %d is waiting\n", pthread_self());
-    	TaskList.Sleep();
+    	pthread_cond_wait(&TaskListReady, &TaskListLock);
     	//LogI("Thread %d weakup\n", pthread_self());
     }
-    
+       //LogD("Thread %d to work\n", pthread_self());
+
     if(!RuningFlag)//exit
     {
+    	pthread_mutex_unlock(&TaskListLock);
     	return ret;
     }
-    
-    if(!TaskList.Pop(ret))
-         ret = NULL;
-    
+    if(NULL == GetTask_Cust)
+    {
+	ret = TaskList.front();
+	TaskList.pop_front();
+    }
+    else
+    {
+    	typename list< CTask* >::iterator it;
+    	for(it = TaskList.begin(); it != TaskList.end(); it++)
+    	{
+    		if(GetTask_Cust((void *)(&(*it))))
+    		{
+    			ret = *it;
+    			TaskList.erase(it);
+    			break;
+    		}
+    	}
+    }
+    pthread_mutex_unlock(&TaskListLock);
     return ret;
 }
 
@@ -89,6 +115,7 @@ bool CThreadPool::ShutDown()
     	RuningFlag = false;
     }
     //send broadcast
+    pthread_cond_broadcast(&TaskListReady);
     LogInf("send exit broadcast");
     for(int i = 0; i < mThreadCount; i++)
     {

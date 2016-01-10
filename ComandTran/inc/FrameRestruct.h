@@ -13,6 +13,7 @@ public:
 private:
     int GetFrame(int sock, char *pRecvBuffer, int RecvLen);
     char* GetBuffer();
+    void FreeBuffer(char* buff);
     void AddToList(int sock, char *pFrame, int len);
     int GetHeadIndex(int CurIndex, char *pRecvBuffer, int RecvLen);
     int GetFrameLen(int CurIndex, char *pRecvBuffer, int RecvLen);

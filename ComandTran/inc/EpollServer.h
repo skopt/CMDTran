@@ -80,7 +80,7 @@ private:
        pthread_t SendProcThread;
        //memory about
        CMemPool SendDataMem;
-       pthread_mutex_t m_SendDataMemLock;
+
        
 
 public:

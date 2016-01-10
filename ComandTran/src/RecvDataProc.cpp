@@ -42,7 +42,6 @@ CRecvDataProc::~CRecvDataProc()
 }
 void CRecvDataProc::Init()
 {
-    pthread_mutex_init(&RecvFrameMPLock, NULL);
     pthread_mutex_init(&ClientMapLock, NULL);
     RecvFrameProcTM.InitPool(4);
     //RecvFrameProcTM.GetTask_Cust = CRecvDataProc::GetTaskCustImp;
@@ -51,33 +50,26 @@ void CRecvDataProc::Init()
 char* CRecvDataProc::GetBuff()
 {
     char *v_pBuff;
-    pthread_mutex_lock(&RecvFrameMPLock);
     v_pBuff = RecvFrameMP.GetBlock();
-    pthread_mutex_unlock(&RecvFrameMPLock);
 
     return v_pBuff;
 }
 void CRecvDataProc::FreeBuff(char *pbuff)
 {
     //free memery
-    pthread_mutex_lock(&RecvFrameMPLock);
     if(!RecvFrameMP.FreeBlock(pbuff))
     {
     	LogError("Free block failed!!!");
     }
-    pthread_mutex_unlock(&RecvFrameMPLock);
 }
 void CRecvDataProc::AddClient(int sock)
 {
-    char *pbuffer = new char[MEM_POOL_BLOCK_SIZE * 2];
-    if(NULL == pbuffer)
-    	return;
-    ClientInfo newClient;
-    newClient.socket = sock;
-    newClient.FrameRestruct.pRecvDataProc = (void *) this;
-    newClient.ClientType = -1;
+    ClientInfo* newClient = new ClientInfo();
+    newClient->socket = sock;
+    newClient->FrameRestruct.pRecvDataProc = (void *) this;
+    newClient->ClientType = -1;
     pthread_mutex_lock(&ClientMapLock);
-       ClientMap.insert(pair<int, ClientInfo>(sock, newClient));
+    ClientMap.insert(pair<int, ClientInfo*>(sock, newClient));
     pthread_mutex_unlock(&ClientMapLock);
 
     LogInf("new client, socket=%d",sock);
@@ -85,15 +77,17 @@ void CRecvDataProc::AddClient(int sock)
 
 void CRecvDataProc::QuitClient(int sock)
 {
-    map<int, ClientInfo>::iterator it;
+    map<int, ClientInfo*>::iterator it;
 
-      pthread_mutex_lock(&ClientMapLock);
-      it = ClientMap.find(sock);
+    pthread_mutex_lock(&ClientMapLock);
+    it = ClientMap.find(sock);
     if(it == ClientMap.end())
     {
-    	pthread_mutex_unlock(&ClientMapLock);
-    	return;
+        pthread_mutex_unlock(&ClientMapLock);
+        return;
     }
+    ClientInfo* client = it->second;
+    delete client;
     ClientMap.erase(it);
     pthread_mutex_unlock(&ClientMapLock);
 
@@ -102,7 +96,7 @@ void CRecvDataProc::QuitClient(int sock)
 
 bool CRecvDataProc::AddRecvData(int sock, char *pbuff, int len)
 {
-    map<int, ClientInfo>::iterator it;
+    map<int, ClientInfo*>::iterator it;
     pthread_mutex_lock(&ClientMapLock);
     it = ClientMap.find(sock);
     if(it == ClientMap.end())
@@ -111,7 +105,7 @@ bool CRecvDataProc::AddRecvData(int sock, char *pbuff, int len)
     	return false;
     }
     pthread_mutex_unlock(&ClientMapLock);
-    it->second.FrameRestruct.RestructFrame(sock, pbuff, len);	
+    it->second->FrameRestruct.RestructFrame(sock, pbuff, len);	
     return true;
 }
 
@@ -188,7 +182,7 @@ bool CRecvDataProc::NewClient(int sock, char *pFrame)
     {
     	return false;
     }
-    map<int, ClientInfo>::iterator it;
+    map<int, ClientInfo*>::iterator it;
     pthread_mutex_lock(&ClientMapLock);
     it = ClientMap.find(sock);
     if(it == ClientMap.end())
@@ -196,13 +190,13 @@ bool CRecvDataProc::NewClient(int sock, char *pFrame)
     	pthread_mutex_unlock(&ClientMapLock);
     	return false;
     }
-    it->second.ClientType = v_iClientType;
-    it->second.CameraId = ((unsigned char)pFrame[5] * 256) + (unsigned char)pFrame[6];
+    it->second->ClientType = v_iClientType;
+    it->second->CameraId = ((unsigned char)pFrame[5] * 256) + (unsigned char)pFrame[6];
     pthread_mutex_unlock(&ClientMapLock);
     //ack
     char login_ack_frame[5] = {0x7E, 0x00, 0x05,0x90,0xA5};
     SendData(sock, login_ack_frame, 5, NULL);
-    LogInf("new client, type=%d, Camera Id=%d", v_iClientType, it->second.CameraId);
+    LogInf("new client, type=%d, Camera Id=%d", v_iClientType, it->second->CameraId);
     return true;
 }
 int CRecvDataProc::SendCallBakcFun(char* buff, int len, int code)
@@ -217,7 +211,7 @@ void CRecvDataProc::PicDataRecv(int sock, char *pFrame, int FrameLen)
     	return;
     }
     //get the phone client camera id
-    map<int, ClientInfo>::iterator v_clientIt;
+    map<int, ClientInfo*>::iterator v_clientIt;
     v_clientIt = ClientMap.find(sock);
     if(v_clientIt == ClientMap.end())
     {
@@ -230,13 +224,13 @@ void CRecvDataProc::PicDataRecv(int sock, char *pFrame, int FrameLen)
     ack_frame[5] = pFrame[7];
     //SendData(sock, ack_frame, 7, NULL);
     //transfer
-    int v_iCameraId = v_clientIt->second.CameraId;
+    int v_iCameraId = v_clientIt->second->CameraId;
 
-    map<int, ClientInfo>::iterator it;
+    map<int, ClientInfo*>::iterator it;
     for(it = ClientMap.begin(); it != ClientMap.end(); it++)
     {
-    	if(it->first != sock && CLIENT_TYPE_PC == it->second.ClientType
-    		&& v_iCameraId == it->second.CameraId)
+    	if(it->first != sock && CLIENT_TYPE_PC == it->second->ClientType
+    		&& v_iCameraId == it->second->CameraId)
     	{
     		SendData(it->first,pFrame,FrameLen, CRecvDataProc::SendCallBakcFun);
     	}
@@ -249,7 +243,7 @@ void CRecvDataProc::ResetCameraId(int sock, char *pFrame, int FrameLen)
     	LogError("bad param");
     	return;
     }
-    map<int, ClientInfo>::iterator it;
+    map<int, ClientInfo*>::iterator it;
     pthread_mutex_lock(&ClientMapLock);
     it = ClientMap.find(sock);
     if(it == ClientMap.end())
@@ -257,9 +251,9 @@ void CRecvDataProc::ResetCameraId(int sock, char *pFrame, int FrameLen)
     	pthread_mutex_unlock(&ClientMapLock);
     	return;
     }
-    it->second.CameraId = ((unsigned char)pFrame[4] * 256) + (unsigned char)pFrame[5];
+    it->second->CameraId = ((unsigned char)pFrame[4] * 256) + (unsigned char)pFrame[5];
     pthread_mutex_unlock(&ClientMapLock);
-    LogInf("socket %d change camera id to %d", sock, it->second.CameraId);
+    LogInf("socket %d change camera id to %d", sock, it->second->CameraId);
 }
 void CRecvDataProc::FrameInit(char* frame, int len, unsigned char code)
 {
