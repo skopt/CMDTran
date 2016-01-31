@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <sched.h>
+#include <stdio.h>
 
 #define QUEUE_LEN 20*1024*1024
 #define CAS(ptr, oldVal, newVal) __sync_bool_compare_and_swap((ptr), (oldVal), (newVal))
@@ -28,6 +29,7 @@ private:
     uint32_t m_readIndex;
     uint32_t m_maximumReadIndex;
     uint32_t m_size;
+    uint32_t m_QueueLen;
 
 private:
     uint32_t CountToIndex(uint32_t cout);
@@ -35,7 +37,7 @@ private:
 
 template <typename ELEM_T>
 CLockFreeQueue<ELEM_T>::CLockFreeQueue()
-:m_writeIndex(0), m_readIndex(0), m_maximumReadIndex(0), m_size(0)
+:m_writeIndex(0), m_readIndex(0), m_maximumReadIndex(0), m_size(0), m_QueueLen(QUEUE_LEN)
 {
     //memset(m_Queue, 0, QUEUE_LEN*sizeof(ELEM_T));
 }
@@ -46,9 +48,9 @@ CLockFreeQueue<ELEM_T>::~CLockFreeQueue()
 }
 
 template <typename ELEM_T>
-uint32_t CLockFreeQueue<ELEM_T>::CountToIndex(uint32_t cout)
+uint32_t CLockFreeQueue<ELEM_T>::CountToIndex(uint32_t count)
 {
-    return (cout % QUEUE_LEN);
+    return count % m_QueueLen;
 }
 
 template <typename ELEM_T>

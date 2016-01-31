@@ -16,6 +16,7 @@ public:
     ~CMasterWorkPool();
     bool InitPool(int workercount);
     bool AddTask(int id, CTask* addTask);
+    bool AddTaskBatch(int id, list<CTask*> & tasks);
     bool ShutDown();
 private:
     

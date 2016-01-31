@@ -17,6 +17,9 @@ void CFrameProcTask::ProcessTask()
 {
     m_DataProc.CommandProc(m_Sock, m_pFrame, m_FrameLen);
     m_DataProc.FreeBuff(m_pFrame);
+    
+    int frames = m_DataProc.DecreaseFrameCount(m_Sock);
+  
     delete this;
     /* struct changed, do not need the flag anymore
        map<int, ClientInfo>::iterator it;
@@ -33,7 +36,7 @@ void CFrameProcTask::ProcessTask()
 }
 
 CRecvDataProc::CRecvDataProc()
-:RecvFrameProcTM("DataProcThreads")
+:RecvFrameProcTM("DataProcThreads"), m_flow_control_high(0), m_flow_control_low(0)
 {
     Init();
 }
@@ -45,7 +48,10 @@ void CRecvDataProc::Init()
     pthread_mutex_init(&ClientMapLock, NULL);
     RecvFrameProcTM.InitPool(4);
     //RecvFrameProcTM.GetTask_Cust = CRecvDataProc::GetTaskCustImp;
-    RecvFrameMP.CreatPool(MEM_POOL_BLOCK_SIZE, 1024*100, 1024*10);
+    RecvFrameMP.CreatPool(MEM_POOL_BLOCK_SIZE, 1024*300, 1024*10);
+    int total = 1024*300;
+    m_flow_control_high = 1024*300;
+    m_flow_control_low =512;
 }
 char* CRecvDataProc::GetBuff()
 {
@@ -68,6 +74,8 @@ void CRecvDataProc::AddClient(int sock)
     newClient->socket = sock;
     newClient->FrameRestruct.pRecvDataProc = (void *) this;
     newClient->ClientType = -1;
+    newClient->FrameCount = 0;
+    newClient->EnableRead = true;
     pthread_mutex_lock(&ClientMapLock);
     ClientMap.insert(pair<int, ClientInfo*>(sock, newClient));
     pthread_mutex_unlock(&ClientMapLock);
@@ -105,14 +113,63 @@ bool CRecvDataProc::AddRecvData(int sock, char *pbuff, int len)
     	return false;
     }
     pthread_mutex_unlock(&ClientMapLock);
-    it->second->FrameRestruct.RestructFrame(sock, pbuff, len);	
+    int frame_count = it->second->FrameRestruct.RestructFrame(sock, pbuff, len);	
+    IncreaseFrameCount(sock, frame_count);
+    //printf("frame count is %d\n", frame_count);
+    //if(frame_count > 0)
+        //RecvFrameProcTM.AddTaskBatch(sock, it->second->FrameRestruct.TaskList);
     return true;
+}
+
+
+int  CRecvDataProc::IncreaseFrameCount(int sock, int count)
+{
+    map<int, ClientInfo*>::iterator it;
+    pthread_mutex_lock(&ClientMapLock);
+    it = ClientMap.find(sock);
+    if(it == ClientMap.end())
+    {
+    	pthread_mutex_unlock(&ClientMapLock);
+    	return false;
+    }
+    it->second->FrameCount += count;
+    
+    int ret = it->second->FrameCount;
+    if(ret > m_flow_control_high && it->second->EnableRead == true)
+    {
+        DisableRead(sock);
+        it->second->EnableRead = false;
+    }
+    pthread_mutex_unlock(&ClientMapLock);
+    return ret;
+}
+
+int  CRecvDataProc::DecreaseFrameCount(int sock)
+{
+    map<int, ClientInfo*>::iterator it;
+    pthread_mutex_lock(&ClientMapLock);
+    it = ClientMap.find(sock);
+    if(it == ClientMap.end())
+    {
+    	pthread_mutex_unlock(&ClientMapLock);
+    	return false;
+    }
+    int ret = --it->second->FrameCount;
+    if(ret < m_flow_control_low && it->second->EnableRead == false)
+    {
+        EnableRead(sock);
+        it->second->EnableRead = true;
+    }
+    pthread_mutex_unlock(&ClientMapLock);
+
+    return ret;
 }
 
 void CRecvDataProc::AddFrameProcTask(int sock, char* frame, int len)
 {
     CFrameProcTask* tmp = new CFrameProcTask(sock, frame, len, *this);
     RecvFrameProcTM.AddTask(sock, tmp);
+    //tmp->ProcessTask();
 }
 
 /*struct changed , do not need anymore
@@ -262,4 +319,18 @@ void CRecvDataProc::FrameInit(char* frame, int len, unsigned char code)
     frame[2] = (unsigned char) (len % 256);
     frame[3] = code;
     frame[len - 1] = 0xA5;
+}
+
+ClientInfo* CRecvDataProc::GetClientInfo(int sock)
+{
+    map<int, ClientInfo*>::iterator it;
+    pthread_mutex_lock(&ClientMapLock);
+    it = ClientMap.find(sock);
+    if(it == ClientMap.end())
+    {		
+    	pthread_mutex_unlock(&ClientMapLock);
+    	return NULL;
+    }
+    pthread_mutex_unlock(&ClientMapLock);
+    return it->second;
 }

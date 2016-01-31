@@ -65,7 +65,22 @@ bool CThreadPool::AddTask(CTask* addTask)
     TaskList.push_back(addTask);
     pthread_mutex_unlock(&TaskListLock);
     pthread_cond_signal(&TaskListReady);
+    
+    //addTask->ProcessTask();
     return true;
+}
+bool CThreadPool::AddTaskBatch(list< CTask* > & tasks)
+{
+    pthread_mutex_lock(&TaskListLock);
+    list< CTask* >::iterator it;
+    for(it = tasks.begin(); it != tasks.end(); ++it)
+    {
+        TaskList.push_back(*it);
+        //CTask* tmp = *it;
+        //tmp->ProcessTask();
+    }
+    pthread_mutex_unlock(&TaskListLock);
+    pthread_cond_signal(&TaskListReady);
 }
 
 CTask* CThreadPool::GetTask()
@@ -78,7 +93,6 @@ CTask* CThreadPool::GetTask()
     	pthread_cond_wait(&TaskListReady, &TaskListLock);
     	//LogI("Thread %d weakup\n", pthread_self());
     }
-       //LogD("Thread %d to work\n", pthread_self());
 
     if(!RuningFlag)//exit
     {

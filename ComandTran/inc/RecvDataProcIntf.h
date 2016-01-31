@@ -13,6 +13,8 @@ public:
 protected:
      CEpollServer* m_pEpoll;
      bool SendData(int sock, char* buff, int len, SendCallBack backfun);
+     bool EnableRead(int sock);
+     bool DisableRead(int sock);
 public:
     void SetEpoll(CEpollServer* epoll);
     virtual void AddClient(int sock)=0;

@@ -18,7 +18,7 @@
 class SocketInformation{
 public:
     SocketInformation()
-        :sockId(0),CurrSendState(0)
+        :sockId(0),CurrSendState(0),EnableRead(true)
     {
     } 
     ~SocketInformation(){}
@@ -28,6 +28,7 @@ public:
     CMemChain OutputChain; 
     pthread_mutex_t OutputChainLock;
     int CurrSendState;
+    bool EnableRead;
 };
 
 class CEpollServer;
@@ -67,6 +68,7 @@ public:
 private:
 	int m_iListenSock;
 	int m_iPort;
+    bool EnableReading;
 	epoll_event m_ListenEvent;
 	epoll_event m_Events[EPOLL_EVENT_MAX];
 
@@ -88,6 +90,10 @@ public:
 	bool Start();
        int GetListenSocket();
        bool SendData(int sock, char *buffer, int len, SendCallBack backfun);
+       bool EnableRead();
+       bool DisableRead();
+       bool EnableRead(int sock);
+       bool DisableRead(int sock);
 
 private:
 	bool InitEvn();
@@ -99,6 +105,7 @@ private:
 	bool ProcessRecvData(epoll_event event);
        bool ProcessSendData(epoll_event event);
        void RemoveSocket(int sock);
+       bool ModifyRead(int sock, bool enable);
        friend class CSocketRecvTask;
        friend class CSocketSendTask;
        

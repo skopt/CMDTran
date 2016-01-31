@@ -30,7 +30,8 @@ bool CMemPool::CreatPool(int blockSize, int blockCount, int step)
     bool ret = ExtendPool(BlockSize, BlockCount);
     if(false == ret)
     {
-    	LogError("CreatPool: extend pool failed");
+    	LogError("CreatPool: extend pool failed, count=%d, free size=%d", 
+    	     m_BlockTotalCount, UnUsedBlockQueue->Size());
     	return false;
     }
        
@@ -43,9 +44,12 @@ char* CMemPool::GetBlock()
 {
     if(UnUsedBlockQueue->Size() <= 0)
     {
-        printf("need to exten\n");
+        //printf("need to exten\n");
         if(!ExtendPool(BlockSize,GrowStep))
+        {
+            LogInf("Extend Pool faild, curren block cout=%d, free size=%d", m_BlockTotalCount, UnUsedBlockQueue->Size());
             return NULL;
+        }
          m_BlockTotalCount += GrowStep;
          LogInf("Extend Pool succeed, curren block cout is  %d", m_BlockTotalCount);
     }
@@ -90,17 +94,22 @@ void CMemPool::FreeMem()
 
 bool CMemPool::ExtendPool(int size, int count)
 {
-    if(GrowCount++ >= GROW_COUNT_MAX)
+    if(GrowCount >= GROW_COUNT_MAX)
     {
         LogError("Grow Count max");
         return false;
     }
 
+    GrowCount++;
+
     for(int i = 0; i < count; ++i)
     {
         char* buff = new char[size];
-        UnUsedBlockQueue->Push(buff);
+        if(false == UnUsedBlockQueue->Push(buff))
+            LogError("push failed\n");
     }
+
+    LogInf("Extend pool, unused size=%d\n", UnUsedBlockQueue->Size());
     return true;
 }
 

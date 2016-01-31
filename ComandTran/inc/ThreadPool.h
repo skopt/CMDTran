@@ -35,6 +35,7 @@ private:
 public:
 	bool InitPool(int threadCount);
 	bool AddTask(CTask* addTask);
+    bool AddTaskBatch(list< CTask* > & tasks);
 	CTask* GetTask();
 	bool ShutDown();
 };

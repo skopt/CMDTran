@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <pthread.h>
 #include <sys/time.h>
+#include <sys/prctl.h>
 #include "Log.h"
 
 CSocketRecvTask::CSocketRecvTask(CEpollServer& epoll, epoll_event event)
@@ -60,7 +61,8 @@ bool CSocketRecvTask::ProcessRecvEnts(epoll_event event)
     }
     else if(event.events&EPOLLIN)//to recv data
     {
-    	ProcessRecvData(event);
+        //printf("----------------EPOLLIN---------------------\n");
+        ProcessRecvData(event);
     }
     else if(event.events&EPOLLOUT)
     {
@@ -179,7 +181,7 @@ void CSocketSendTask::ProcessTask()
     delete this;
 }
 CEpollServer::CEpollServer(int port, CRecvDataProcIntf* dataproc)
-:ThreadManager("RecvThreads"), SendThreadManager("SendThreads")
+:ThreadManager("RecvThreads"), SendThreadManager("SendThreads"),EnableReading(true)
 {
     m_iPort = port;
     RecvDataProc = dataproc;
@@ -353,6 +355,7 @@ void CEpollServer::RemoveSocket(int sock)
 void* CEpollServer::_EventRecvFun(void *pArgu)
 {
     CEpollServer *pthis = (CEpollServer *)pArgu;
+    prctl(PR_SET_NAME, "epoll wait", NULL, NULL, NULL);
     int v_NumRecvFD = 0, i = 0;
     if(!pthis->InitScoket())
     {
@@ -361,12 +364,113 @@ void* CEpollServer::_EventRecvFun(void *pArgu)
     }
     while(true)
     {
-        v_NumRecvFD = epoll_wait(pthis->m_iEpollfd, pthis->m_Events,EPOLL_EVENT_MAX, -1);
+        v_NumRecvFD = epoll_wait(pthis->m_iEpollfd, pthis->m_Events,EPOLL_EVENT_MAX, 10);
         for(i = 0;i < v_NumRecvFD; i++)
         {
         	CSocketRecvTask* tmp = new CSocketRecvTask(*pthis, pthis->m_Events[i]);
         	pthis->ThreadManager.AddTask(pthis->m_Events[i].data.fd, tmp);
+        	//tmp->ProcessTask();
         }
     }
 }
 
+bool CEpollServer::EnableRead()
+{
+    if(EnableReading)
+        return true;
+
+    bool ret = true;
+    epoll_event ev;
+    ev.events = EPOLLIN | EPOLLOUT | EPOLLET;
+
+    map<int, SocketInformation*>::iterator it;
+    for(it = m_SocketInfo.begin(); it != m_SocketInfo.end();++it)
+    {
+            SocketInformation* tmp = it->second;
+            ev.data.fd = tmp->sockId;
+            if(epoll_ctl(m_iEpollfd, EPOLL_CTL_MOD, tmp->sockId, &ev) < 0)
+            {
+                LogError("Enable Read failded");
+                ret = false;
+            }
+    }
+    
+    EnableReading = true;
+    return ret;
+}
+
+bool CEpollServer::DisableRead()
+{
+    if(!EnableReading)
+        return true;
+    
+    bool ret = true;
+    epoll_event ev;
+    ev.events = EPOLLOUT | EPOLLET;
+
+    map<int, SocketInformation*>::iterator it;
+    for(it = m_SocketInfo.begin(); it != m_SocketInfo.end();++it)
+    {
+            SocketInformation* tmp = it->second;
+            ev.data.fd = tmp->sockId;
+            if(epoll_ctl(m_iEpollfd, EPOLL_CTL_MOD, tmp->sockId, &ev) < 0)
+            {
+                LogError("Enable Read failded");
+                ret = false;
+            }
+    }
+
+    EnableReading = false;
+    return ret;
+}
+
+bool CEpollServer::ModifyRead(int sock, bool enable)
+{   
+    bool ret = true;
+    pthread_mutex_lock(&m_SocketInfoLock);
+    map<int, SocketInformation*>::iterator it;
+    it = m_SocketInfo.find(sock);
+    if(it == m_SocketInfo.end())
+    {
+        pthread_mutex_unlock(&m_SocketInfoLock);
+        return true;
+    }
+
+    if(enable == it->second->EnableRead)
+    {
+        pthread_mutex_unlock(&m_SocketInfoLock);
+        return true;
+    }
+
+    it->second->EnableRead = enable;//executed in sequence for one sock, so no problem 
+    pthread_mutex_unlock(&m_SocketInfoLock);
+
+    epoll_event ev;
+    ev.data.fd = sock;
+    if(enable)
+        ev.events = EPOLLIN | EPOLLOUT | EPOLLET;
+    else
+        ev.events = EPOLLOUT | EPOLLET;
+
+    int res = 1;
+    if((res = epoll_ctl(m_iEpollfd, EPOLL_CTL_MOD, sock, &ev)) < 0)
+    {
+        LogError("Enable Read failded");
+        ret = false;
+    }
+    //printf("modify read %d,res=%d,  ret=%d\n", enable, res, ret);
+    fflush(stdout);
+    return ret;
+}
+
+bool CEpollServer::EnableRead(int sock)
+{
+    LogInf("sock=%d, disable read", sock);
+    return ModifyRead(sock, true);
+}
+
+bool CEpollServer::DisableRead(int sock)
+{
+   LogInf("sock=%d, disable read", sock);
+   return ModifyRead(sock,false);
+}

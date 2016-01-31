@@ -4,4 +4,8 @@
 
 using namespace std;
 string Int2String(int value);
+void NSleep(int interval);
+void USleep(int interval);
+
+
 #endif

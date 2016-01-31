@@ -1,6 +1,11 @@
 #ifndef _FRAMERESTRUCT_H
 #define _FRAMERESTRUCT_H
 
+#include <list>  
+#include "Task.h"
+
+using namespace std; 
+
 #define EXIT_BUFFER_LEN 2048
 #define FRAME_HEAD 0x7E
 #define FRAME_LEN_MIN 5
@@ -28,5 +33,7 @@ public:
 private:
     char m_pExitBuffer[EXIT_BUFFER_LEN];
     int m_iExitLen;	
+public:
+    list< CTask* > TaskList;
 };
 #endif

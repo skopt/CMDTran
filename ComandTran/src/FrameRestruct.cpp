@@ -21,6 +21,7 @@ int CFrameRestruct::RestructFrame(int sock, char *pRecvBuffer, int RecvLen)
 	int v_iCurIndex = 0;
 	int v_iFrameLen = 0;
 	char *pFrame = NULL;
+    TaskList.clear();
 	while(true)
 	{
 		//check head
@@ -34,7 +35,7 @@ int CFrameRestruct::RestructFrame(int sock, char *pRecvBuffer, int RecvLen)
 		if(-1 == v_iCurIndex)//no frames in rest buffer
 		{
 			m_iExitLen = 0;
-			v_iFrameCount++;
+			//v_iFrameCount++;
 			break;
 		}
 		//check if the shortest frame
@@ -99,11 +100,16 @@ void CFrameRestruct::FreeBuffer(char* buff)
 }
 void CFrameRestruct::AddToList(int sock, char *pFrame, int len)
 {
+    /*
+       CFrameProcTask* tmp = new CFrameProcTask(sock, pFrame, len, *((CRecvDataProc *) pRecvDataProc));
+       TaskList.push_back(tmp);
+       */ 
 	if(NULL == pRecvDataProc)
 		return;
 
 	CRecvDataProc *v_pRecvDataProc = (CRecvDataProc *) pRecvDataProc;
        v_pRecvDataProc->AddFrameProcTask(sock, pFrame, len);
+
 }
 
 int CFrameRestruct::GetHeadIndex(int CurIndex, char *pRecvBuffer, int RecvLen)

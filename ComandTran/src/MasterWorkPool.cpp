@@ -35,6 +35,13 @@ bool CMasterWorkPool::AddTask(int id, CTask* addTask)
     m_ThreadMap.find(v_iWorkerId)->second->AddTask(addTask);
     return ret;
 }
+bool CMasterWorkPool::AddTaskBatch(int id, list<CTask*> & tasks)
+{
+    bool ret = true;
+    int v_iWorkerId = id % m_iWorkerCount;
+    m_ThreadMap.find(v_iWorkerId)->second->AddTaskBatch(tasks);
+    return ret;
+}
 
 bool CMasterWorkPool::ShutDown()
 {
